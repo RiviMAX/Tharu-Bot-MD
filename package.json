@@ -1,5 +1,5 @@
 {
-  "name": "CheemsBot-MD",
+  "name": "Tharu Bot-MD",
   "version": "4.0.0",
   "description": "Automated whatsapp md bot created using nodejs",
   "main": "xeon.js",
@@ -17,7 +17,7 @@
     "bot-md",
     "multi-device"
   ],
-  "author": "Xeon",
+  "author": "Rivishan",
   "license": "MIT",
   "dependencies": {
     "@adiwajshing/baileys": "^4.1.0",
@@ -75,10 +75,10 @@
   "devDependencies": {},
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/DGXeon/CheemsBot-MD4.git"
+    "url": "git+https://github.com/RiviMAX/Tharu-Bot.git"
   },
   "bugs": {
-    "url": "https://github.com/DGXeon/CheemsBot-MD4/issues"
+    "url": "https://github.com/RiviMAX/Tharu-Bot/issues"
   },
-  "homepage": "https://github.com/DGXeon/CheemsBot-MD4#readme"
+  "homepage": "https://github.com/RiviMAX/Tharu-Bot#readme"
 }
