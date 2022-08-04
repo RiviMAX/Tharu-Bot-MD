@@ -1,6 +1,6 @@
 
 
-<h1 align="center">☺️Tԋαɾυ Bσƚ💞<br></h1>
+<h1 align="center">☺️Tharu Bot💞<br></h1>
 <p align="center">
 <img src="https://i.ibb.co/3pJvPsW/Tharu-Bot-Gif.gif" alt="animated"/>
 </p>
