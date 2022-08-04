@@ -6,12 +6,12 @@
 </p>
 
 <p align="center">
-Cheems Bot Multi Device is a automated whatsapp bot created by <a href="https://github.com/RiviMAX" target="_blank">Xeon</a> using <a href="https://github.com/adiwajshing/Baileys" target="_blank">Baileys</a> and <a href="https://github.com/nodejs" target="_blank">Nodejs</a>. Dont forget to give a star bro.
+Tharu Bot Multi Device whatsapp bot created by <a href="https://github.com/RiviMAX" target="_blank">Rivishan</a> using <a href="https://github.com/adiwajshing/Baileys" target="_blank">Baileys</a> and <a href="https://github.com/nodejs" target="_blank">Nodejs</a>.
 </p>
 
 -------
 
-## ```Connect With Me```
+## ```Connect Developer```
 <p align="center">
 <a href="https://wa.me/94789864930"><img src="https://img.shields.io/badge/Contact Rivishan-25D366?style=for-the-badge&logo=whatsapp&logoColor=white" />
 </p>
