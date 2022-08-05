@@ -1119,6 +1119,10 @@ const latensie = speed() - timestampe
 function pickRandom(list) {
 return list[Math.floor(list.length * Math.random())]
 }
+//document randomizer
+let documents = [doc1,doc2,doc3,doc4,doc5,doc6]
+let docs = pickRandom(documents)
+
 // short story
 async function cerpen (category) {
     return new Promise((resolve, reject) => {
