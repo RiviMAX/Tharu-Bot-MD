@@ -6802,7 +6802,7 @@ if (isBanChat) return reply(mess.banChat)
                     var but = [
 				{
 					"urlButton": {
-						"displayText": "Watch🎥",
+						"displayText": "Watch💙",
 						"url": `${websitex}`
 						}
 					}
@@ -6829,7 +6829,7 @@ if (isBanChat) return reply(mess.banChat)
                     var but = [
 				{
 					"urlButton": {
-						"displayText": "YouTube📍",
+						"displayText": "YouTube💙",
 						"url": `${websitex}`
 						}
 					}
@@ -6855,7 +6855,7 @@ if (isBanChat) return reply(mess.banChat)
                     var but = [
 				{
 					"urlButton": {
-						"displayText": "YouTube📍",
+						"displayText": "YouTube💙",
 						"url": `${websitex}`
 						}
 					}
@@ -7058,7 +7058,7 @@ for (let i of res) {
 teks += `\n\nName : ${i.name}\nCategory : ${i.category}\nDate : ${i.date}\nDesc : ${i.desc}\nLink : ${i.link}`
 }
 let buttons = [
-{buttonId: `menu`, buttonText: {displayText: 'Menu🥀'}, type: 1}
+{buttonId: `menu`, buttonText: {displayText: 'Menu💞'}, type: 1}
 ]
 let buttonMessage = {
 image: log0,
@@ -7083,7 +7083,7 @@ teks += `\n\n${i.name}\n`
 teks += `${i.link}`
 }
 let buttons = [
-{buttonId: `menu`, buttonText: {displayText: 'Menu🥀'}, type: 1}
+{buttonId: `menu`, buttonText: {displayText: 'Menu💞'}, type: 1}
 ]
 let buttonMessage = {
 image: {url:res[0].icon},
@@ -7110,7 +7110,7 @@ teks += `${i.link}\n`
 teks += `${i.nama}`
 }
 let buttons = [
-{buttonId: `menu`, buttonText: {displayText: 'Menu🥀'}, type: 1}
+{buttonId: `menu`, buttonText: {displayText: 'Menu💞'}, type: 1}
 ]
 let buttonMessage = {
 image: log0,
@@ -7134,7 +7134,7 @@ for (let i of res) {
 teks += `${themeemoji} Server To ${no++}\nip : ${i.ip}\nport : ${i.port}\nversi : ${i.versi}\nplayer : ${i.player}\n\n`
 }
 let buttons = [
-{buttonId: `menu`, buttonText: {displayText: 'Menu🥀'}, type: 1}
+{buttonId: `menu`, buttonText: {displayText: 'Menu💞'}, type: 1}
 ]
 let buttonMessage = {
 image: log0,
@@ -8750,7 +8750,7 @@ reply(`Successfully Reported To The Owner\n\nPlease Make Sure The Bug Is Valid, 
 case 'sc': case 'script': case 'donate': case 'donate': case 'cekupdate': case 'updatebot': case 'cekbot': case 'sourcecode': {
 	if (isBan) return reply(mess.ban)	 			
 if (isBanChat) return reply(mess.banChat)
-teks = `*「 ${global.botname} Script 」*\n\nYouTube: ${global.websitex}\nGitHub: ${global.botscript}\n\nDont forget to donate 🍜`
+teks = `*「 ${global.botname} Script 」*\n\nYouTube: ${global.websitex}\nWhatsApp: ${global.botscript}\n\nDont forget to Comment Me`
 let buttons = [
 {buttonId: `menu`, buttonText: {displayText: 'Menu 💙'}, type: 1}
 ]
@@ -8762,8 +8762,8 @@ footer: `${botname}`,
 buttons: buttons,
 headerType: 4,
 contextInfo:{externalAdReply:{
-title:"I deserve something for my hardwork",
-body: "Click to Contact", 
+title:"Tharu Bot Created By Rivishan",
+body: "Look at The Logo ", 
 thumbnail: fs.readFileSync("XeonMedia/theme/Tharu Bot 1.jpg"),
 mediaType:1,
 mediaUrl: 'https://i.ibb.co/6Hm0sRD/Tharu-Bot-1.jpg',
