@@ -2,7 +2,7 @@
 
 <h1 align="center">☺️Tharu Bot💞<br></h1>
 <p align="center">
-<img src="https://i.ibb.co/3pJvPsW/Tharu-Bot-Gif.gif" alt="Tharu-Bot-Gif" border="0" />
+<img src="https://i.im.ge/2022/08/05/FcEdf0.Tharu-Bot-Gif.gif" alt="Tharu-Bot-Gif" border="0" />
 </p>
 
 <p align="center">
