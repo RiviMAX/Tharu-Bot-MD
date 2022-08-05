@@ -1,3 +1,3 @@
 {
-	"name": "Tharu Bot Multi Device "
+	"name": "TharuBot Multi Device "
 }
