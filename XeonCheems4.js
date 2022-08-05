@@ -6127,7 +6127,7 @@ if (isBanChat) return reply(mess.banChat)
 if (!args.join(" ")) return replay(`Example : ${prefix + command} stay jb`)
 let yts = require("yt-search")
 let search = await yts(args.join(" "))
-let teks = '*| YOUTUBE SEARCH |*\n\n Result From '+text+'\n\n'
+let teks = '*| ❣️YOUTUBE SEARCH❣️ |*\n\n Result From '+text+'\n\n'
 let no = 1
 for (let i of search.all) {
 teks += `${global.themeemoji} No : ${no++}\n${global.themeemoji} Type : ${i.type}\n${global.themeemoji} Video ID : ${i.videoId}\n${global.themeemoji} Title : ${i.title}\n${global.themeemoji} Views : ${i.views}\n${global.themeemoji} Duration : ${i.timestamp}\n${global.themeemoji} Uploaded : ${i.ago}\n${global.themeemoji} Author : ${i.author.name}\n${global.themeemoji} Url : ${i.url}\n\n─────────────────\n\n`
@@ -6164,7 +6164,7 @@ let buttons = [
 ]
 let buttonMessage = {
 image: { url: images },
-caption: `*| GOOGLE IMAGE |*
+caption: `*| ❣️GOOGLE IMAGE❣️ |*
 
 ${global.themeemoji} Query : ${text}
 ${global.themeemoji} Media Url : ${images}`,
@@ -6192,7 +6192,7 @@ try {
 hx.igstory(args[0]).then(async(resed) => {
 ini_anu = []
 anu_list = []
-textbv = `*| INSTAGRAM STORY |*\n\n${global.themeemoji} Username : ${resed.user.username ? resed.user.name : "undefined"}\n${global.themeemoji} Followers : ${resed.user.followers}`
+textbv = `*| ❣️INSTAGRAM STORY❣️ |*\n\n${global.themeemoji} Username : ${resed.user.username ? resed.user.name : "undefined"}\n${global.themeemoji} Followers : ${resed.user.followers}`
 urut = 1
 for (let i = 0; i < resed.medias.length; i++) {
 ini_anu.push({
