@@ -1119,10 +1119,6 @@ const latensie = speed() - timestampe
 function pickRandom(list) {
 return list[Math.floor(list.length * Math.random())]
 }
-//document randomizer
-let documents = [doc1,doc2,doc3,doc4,doc5,doc6]
-let docs = pickRandom(documents)
-
 // short story
 async function cerpen (category) {
     return new Promise((resolve, reject) => {
@@ -8837,126 +8833,126 @@ let template = await generateWAMessageFromContent(m.chat, proto.Message.fromObje
                     footerText: `${global.botname}`,
                     listType: "SINGLE_SELECT",
                     sections: [{
-								"title": "Initial Features Of Bot ❤️",
+								"title": "❤️ Initial Features Of Bot ❤️",
 								"rows": [
 									{
-										"title": "Other 💙",
-										"description": "Displays The List Of Other Features",
+										"title": "💙 Other 💙",
+										"description": "💞 Displays The List Of Other Features 💞",
 										"rowId": `${prefix}othermenu`
 									}
 								]
 							},
 							{
-								"title": "Bot Features ❤️",
+								"title": "❤️ Bot Features ❤️",
 								"rows": [
 									{
-										"title": "All Menu 💙",
-										"description": "Displays The List Of All The Features!",
+										"title": "💙 All Menu 💙",
+										"description": "💞 Displays The List Of All The Features 💞",
 										"rowId": `${prefix}allmenu`
 									},
 									{
-										"title": "Owner Menu 💙",
-										"description": "Displays The List Of Owner Features",
+										"title": "💙 Owner Menu 💙",
+										"description": "💞 Displays The List Of Owner Features 💞",
 										"rowId": `${prefix}ownermenu`
 										},
 									{
-										"title": "Group Menu 💙",
-										"description": "Displays The List Of Main Features",
+										"title": "💙 Group Menu 💙",
+										"description": "💞 Displays The List Of Main Features 💞",
 										"rowId": `${prefix}groupmenu`
 										},
 										{
-										"title": "Maker Menu 💙",
-										"description": "Displays The List Of Logo Making Features",
+										"title": "💙 Maker Menu 💙",
+										"description": "💞 Displays The List Of Logo Making Features 💞",
 										"rowId": `${prefix}indomenu`
 									},
 									{
-										"title": "Sound Menu 💙",
-										"description": "Displays The List Of Sound Features",
+										"title": "💙 Sound Menu 💙",
+										"description": "💞 Displays The List Of Sound Features 💞",
 										"rowId": `${prefix}soundmenu`
 									},
 									{
-										"title": "Download Menu 💙",
-										"description": "Displays The List Of Download Features",
+										"title": "💙 Download Menu 💙",
+										"description": "💞 Displays The List Of Download Features 💞",
 										"rowId": `${prefix}downloadmenu`
 									},
 									{
-										"title": "Sticker Menu 💙",
-										"description": "Displays The List Of Sticker Features",
+										"title": "💙 Sticker Menu 💙",
+										"description": "💞 Displays The List Of Sticker Features 💞",
 										"rowId": `${prefix}indomenu`
 									},
 									{
-										"title": "Search Menu 💙",
-										"description": "Displays The List Of Searching Features",
+										"title": "💙 Search Menu 💙",
+										"description": "💞 Displays The List Of Searching Features 💞",
 										"rowId": `${prefix}searchmenu`
 									},
 									{
-										"title": "Tool Menu 💙",
-										"description": "Displays The List Of Tool Features",
+										"title": "💙 Tool Menu 💙",
+										"description": "💞 Displays The List Of Tool Features 💞",
 										"rowId": `${prefix}toolmenu`
 									},
 									{
-										"title": "Random Image Menu 💙",
-										"description": "Displays The List Of Random Image Features",
+										"title": "💙 Random Image Menu 💙",
+										"description": "💞 Displays The List Of Random Image Features 💞",
 										"rowId": `${prefix}randomimagemenu`
 									},
 									{
-										"title": "Image Effect Menu 💙",
-										"description": "Displays The List Of Image Effect Features",
+										"title": "💙 Image Effect Menu 💙",
+										"description": "💞 Displays The List Of Image Effect Features 💞",
 										"rowId": `${prefix}imageeffectmenu`
 									},
 										{
-											"title": "Anime Menu 💙",
-										"description": "Displays The List Of Random Anime Features",
+											"title": "💙 Anime Menu 💙",
+										"description": "💞 Displays The List Of Random Anime Features 💞",
 										"rowId": `${prefix}animemenu`
 										},
 										{
-											"title": "Emote Menu 💙",
-										"description": "Displays The List Of Emote Features",
+											"title": "💙 Emote Menu 💙",
+										"description": "💞 Displays The List Of Emote Features 💞",
 										"rowId": `${prefix}emotemenu`
 										},
 										{
-										"title": "Anime Sticker Menu 💙",
-										"description": "Displays The List Of Anime Sticker Features",
+										"title": "💙 Anime Sticker Menu 💙",
+										"description": "💞 Displays The List Of Anime Sticker Features 💞",
 										"rowId": `${prefix}animestickermenu`
 									     },
 										{
-											"title": "Fun Menu 💙",
-										"description": "Displays The List Of Fun Features",
+											"title": "💙 Fun Menu 💙",
+										"description": "💞 Displays The List Of Fun Features 💞",
 										"rowId": `${prefix}funmenu`
 										},
 										{
-										"title": "Game Menu 💙",
-										"description": "Displays The List Of Game Features",
+										"title": "💙 Game Menu 💙",
+										"description": "💞 Displays The List Of Game Features 💞",
 										"rowId": `${prefix}indomenu`
 									},
 										{
-											"title": "Convert Menu 💙",
-										"description": "Displays The List Of Convert Features",
+											"title": "💙 Convert Menu 💙",
+										"description": "💞 Displays The List Of Convert Features 💞",
 										"rowId": `${prefix}convertmenu`
 										},
 										{
-											"title": "Database Menu 💙",
-										"description": "Displays The List Of Database Features",
+											"title": "💙 Database Menu 💙",
+										"description": "💞 Displays The List Of Database Features 💞",
 										"rowId": `${prefix}databasemenu`
 										}
 								]
 							},
 							{
-								"title": "Chat With Fellow Users 🌝",
+								"title": "❤️ Chat With Fellow Users ❤️",
 								"rows": [
 									{
-										"title": "Anonymous Chat Menu 🙎🏻‍♂️",
-										"description": "Displays The List Of Anonymous Chat Features",
+										"title": "💙 Anonymous Chat Menu 💙",
+										"description": "💞 Displays The List Of Anonymous Chat Features 💞",
 										"rowId": `${prefix}anonymousmenu`
 									}
 								]
 							},
 							{
-								"title": "Credit ©️",
+								"title": "❤️ Credit ❤️",
 								"rows": [
 									{
-										"title": "Thanks To ❤️",
-										"description": "Displays The List Of Credit Of Tharu Bot !!",
+										"title": "💙 Thanks To 💙",
+										"description": "💞 Displays The List Of Credit Of Tharu Bot 💞",
 										"rowId": `${prefix}tqtt`
 									}
 								]
