@@ -1,7 +1,7 @@
 {
   "name": "Tharu Bot-MD",
   "description": "whatsapp md bot build with nodejs",
-  "repository": "https://github.com/RiviMAX/Tharu-Bot",
+  "repository": "https://github.com/RiviMAX/Tharu-Bot-MD",
   "logo": "https://i.ibb.co/6Hm0sRD/Tharu-Bot-1.jpg",
   "keywords": ["nodejs", "bot", "whatsapp bot", "whatsapp automation", "multi device"],
   "buildpacks": [
