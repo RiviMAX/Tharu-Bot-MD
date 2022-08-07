@@ -75,10 +75,10 @@
   "devDependencies": {},
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/RiviMAX/Tharu-Bot.git"
+    "url": "git+https://github.com/RiviMAX/Tharu-Bot-MD.git"
   },
   "bugs": {
-    "url": "https://github.com/RiviMAX/Tharu-Bot/issues"
+    "url": "https://github.com/RiviMAX/Tharu-Bot-MD/issues"
   },
-  "homepage": "https://github.com/RiviMAX/Tharu-Bot#readme"
+  "homepage": "https://github.com/RiviMAX/Tharu-Bot-MD#readme"
 }
