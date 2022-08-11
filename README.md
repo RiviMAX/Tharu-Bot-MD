@@ -11,8 +11,6 @@ Tharu Bot Multi Device whatsapp bot created by <a href="https://github.com/RiviM
 
 -------
 
-## [![Typing SVG](https://readme-typing-svg.herokuapp.com?font=Rockstar-ExtraBold&color=F33A6A&lines=𝐖𝐞𝐥𝐜𝐨𝐦𝐞+𝐓𝐨+THARU+ BOT+MD.;POWERD+BY:+THARU+BOT+MD+𝚃𝙴𝙰𝙼;Created+by:+Rivishan;MR:+RiviMAX;💕ඉතිං+කොහොමද🙃;😁මොකද+කරන්නෙ🌹)](https://git.io/typing-svg)
-
 ## ```Connect Developer```
 <p align="center">
 <a href="https://wa.me/94789864930"><img src="https://img.shields.io/badge/Contact Rivishan-25D366?style=for-the-badge&logo=whatsapp&logoColor=white" />
