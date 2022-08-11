@@ -50,7 +50,7 @@ Tharu Bot Multi Device whatsapp bot created by <a href="https://github.com/RiviM
     </tr>
     <tr>
         <td>
-            <p>Voice</P>
+            <p>Voice & Idea</P>
             <br>
             <br>
         <td>
