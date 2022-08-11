@@ -25,4 +25,4 @@ Tharu Bot Multi Device whatsapp bot created by <a href="https://github.com/RiviM
 
 ***
 
-<table><tr><th>Ms:Tharu</th><th>Rivishan Sandeep </th></tr><tr><td><a href="https://github.com/RiviMAX"><img src="https://i.ibb.co/S6K3b9Y/Tharu-Bot-2.jpg" width="180" alt="Tharu Bot"></a></td><td><a href="https://github.com/RiviMAX"><img src="https://i.ibb.co/VTq9Kn5/Rivishan-cartoon.jpg" width="180" alt="Rivishan Sandeep"></a></td></tr><tr><td>Voice</td><td>Developer & Owner </td></tr></table>
+<table><tr><th>Ms:Tharu</th><th>Rivishan Sandeep </th></tr><tr><td><a href="https://github.com/RiviMAX"><img src="https://i.ibb.co/S6K3b9Y/Tharu-Bot-2.jpg" width="180" alt="Tharu Bot"></a></td><td><a href="https://github.com/RiviMAX"><img src="https://i.ibb.co/VTq9Kn5/Rivishan-cartoon.jpg" width="180" alt="Rivishan Sandeep"></a></td></tr><tr><td>Owner</td><td>Developer & Owner </td></tr></table>
