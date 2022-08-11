@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════ //
-=> If you want to recode, reupload,
+=> If you want to recode, reupload ,
 => or copy the codes/script,
 => pls give credit,
 => no credit? i will take action immediately.
