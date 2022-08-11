@@ -2,10 +2,10 @@
   "name": "Tharu Bot-MD",
   "version": "4.0.0",
   "description": "Automated whatsapp md bot created using nodejs",
-  "main": "xeon.js",
+  "main": "index.js",
   "type": "commonjs",
   "scripts": {
-    "start": "node xeon.js"
+    "start": "node index.js"
   },
   "keywords": [
     "termux",
