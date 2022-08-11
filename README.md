@@ -7,8 +7,6 @@
 Tharu Bot Multi Device whatsapp bot created by <a href="https://github.com/RiviMAX" target="_blank">Rivishan</a> using <a href="https://github.com/adiwajshing/Baileys" target="_blank">Baileys</a> and <a href="https://github.com/nodejs" target="_blank">Nodejs</a>.
 </p>
 
----
-
 ## ``Connect Developer``
 
 <p align="center">
