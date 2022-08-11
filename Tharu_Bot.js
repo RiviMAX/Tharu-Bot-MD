@@ -221,6 +221,8 @@ const isInventoryLimit = cekDuluJoinAdaApaKagaLimitnyaDiJson(m.sender);
 const isInventoryMonay = cekDuluJoinAdaApaKagaMonaynyaDiJson(m.sender);
 const ikan = ["🐟", "🐠", "🐡"];
 
+const _auto_reply = JSON.parse(fs.readFileSync('./database/autoreply.json'));
+
 //rpg database\\
 let _limit = JSON.parse(fs.readFileSync("./storage/user/limit.json"));
 let _buruan = JSON.parse(fs.readFileSync("./storage/user/hasil_buruan.json"));
@@ -258,7 +260,7 @@ let tebaklirik = (db.data.game.lirik = []);
 let tebaktebakan = (db.data.game.tebakan = []);
 let vote = (db.data.others.vote = []);
 
-module.exports = XeonBotInc = async (XeonBotInc, m, chatUpdate, store) => {
+module.exports = XeonBotInc = async (conn, m, chatUpdate, store) => {
   try {
     var body =
       m.mtype === "conversation"
@@ -295,7 +297,7 @@ module.exports = XeonBotInc = async (XeonBotInc, m, chatUpdate, store) => {
       .toLowerCase();
     const args = body.trim().split(/ +/).slice(1);
     const pushname = m.pushName || "No Name";
-    const botNumber = await XeonBotInc.decodeJid(XeonBotInc.user.id);
+    const botNumber = await conn.decodeJid(conn.user.id);
     const isCreator = [botNumber, ...global.owner]
       .map((v) => v.replace(/[^0-9]/g, "") + "@s.whatsapp.net")
       .includes(m.sender);
@@ -311,7 +313,7 @@ module.exports = XeonBotInc = async (XeonBotInc, m, chatUpdate, store) => {
 
     //group\\
     const groupMetadata = m.isGroup
-      ? await XeonBotInc.groupMetadata(m.chat).catch((e) => {})
+      ? await conn.groupMetadata(m.chat).catch((e) => {})
       : "";
     const groupName = m.isGroup ? groupMetadata.subject : "";
     const participants = m.isGroup ? await groupMetadata.participants : "";
@@ -406,7 +408,7 @@ module.exports = XeonBotInc = async (XeonBotInc, m, chatUpdate, store) => {
 
     // FAKE TEXT IMG
     const textImg = (teks) => {
-      XeonBotInc.sendMessage(
+      conn.sendMessage(
         m.chat,
         { text: teks },
         { quoted: m, thumbnail: fs.readFileSync("./Media/image/wpmobile.png") }
@@ -584,7 +586,7 @@ module.exports = XeonBotInc = async (XeonBotInc, m, chatUpdate, store) => {
 
     //group target \\
     const reply = (teks) => {
-      XeonBotInc.sendMessage(
+      conn.sendMessage(
         m.chat,
         {
           text: teks,
@@ -604,7 +606,7 @@ module.exports = XeonBotInc = async (XeonBotInc, m, chatUpdate, store) => {
     };
 
     const replay = (teks) => {
-      XeonBotInc.sendMessage(
+      conn.sendMessage(
         m.chat,
         {
           text: teks,
@@ -624,7 +626,7 @@ module.exports = XeonBotInc = async (XeonBotInc, m, chatUpdate, store) => {
     };
 
     //Public & Self\\
-    if (!XeonBotInc.public) {
+    if (!conn.public) {
       if (!m.key.fromMe) return;
     }
 
@@ -660,6 +662,14 @@ module.exports = XeonBotInc = async (XeonBotInc, m, chatUpdate, store) => {
       }
     );
 
+    // Auto reply
+    if (global.autoreply){
+      conn.sendMessage(from, { react: { text: `💗`, key: m.key }})
+      const FirstWord = body.toLowerCase().split(" ")[0];
+      let condition = _auto_reply[FirstWord];
+      if (condition == !undefined) reply(condition)
+    }
+
     //hitter
     global.hit = {};
     if (isCmd) {
@@ -682,38 +692,38 @@ module.exports = XeonBotInc = async (XeonBotInc, m, chatUpdate, store) => {
     //auto read whatsapp status
     if (autoreadsw) {
       if (from === "status@broadcast") {
-        XeonBotInc.chatRead(from);
+        conn.chatRead(from);
       }
     }
     //autoreader gc and pm
     if (global.autoreadpmngc) {
       if (command) {
-        await XeonBotInc.sendPresenceUpdate("composing", m.chat);
-        XeonBotInc.sendReadReceipt(from, m.sender, [m.key.id]);
+        await conn.sendPresenceUpdate("composing", m.chat);
+        conn.sendReadReceipt(from, m.sender, [m.key.id]);
       }
     }
     //autoread gc only
     if (global.autoReadGc) {
       if (m.isGroup) {
-        XeonBotInc.sendReadReceipt(m.chat, m.sender, [m.key.id]);
+        conn.sendReadReceipt(m.chat, m.sender, [m.key.id]);
       }
     }
     //auto recording all
     if (global.autoRecord) {
       if (m.chat) {
-        XeonBotInc.sendPresenceUpdate("recording", m.chat);
+        conn.sendPresenceUpdate("recording", m.chat);
       }
     }
     //autotyper all
     if (global.autoTyping) {
       if (m.chat) {
-        XeonBotInc.sendPresenceUpdate("composing", m.chat);
+        conn.sendPresenceUpdate("composing", m.chat);
       }
     }
     //auto available all
     if (global.available) {
       if (m.chat) {
-        XeonBotInc.sendPresenceUpdate("available", m.chat);
+        conn.sendPresenceUpdate("available", m.chat);
       }
     }
 
@@ -721,7 +731,7 @@ module.exports = XeonBotInc = async (XeonBotInc, m, chatUpdate, store) => {
     if (isAutoSticker) {
       if (/image/.test(mime) && !/webp/.test(mime)) {
         let mediac = await quoted.download();
-        await XeonBotInc.sendImageAsSticker(from, mediac, m, {
+        await conn.sendImageAsSticker(from, mediac, m, {
           packname: global.packname,
           author: global.author,
         });
@@ -729,7 +739,7 @@ module.exports = XeonBotInc = async (XeonBotInc, m, chatUpdate, store) => {
       } else if (/video/.test(mime)) {
         if ((quoted.msg || quoted).seconds > 11) return;
         let mediac = await quoted.download();
-        await XeonBotInc.sendVideoAsSticker(from, mediac, m, {
+        await conn.sendVideoAsSticker(from, mediac, m, {
           packname: global.packname,
           author: global.author,
         });
@@ -739,7 +749,7 @@ module.exports = XeonBotInc = async (XeonBotInc, m, chatUpdate, store) => {
     if (isAutoStick) {
       if (/image/.test(mime) && !/webp/.test(mime)) {
         let mediac = await quoted.download();
-        await XeonBotInc.sendImageAsSticker(from, mediac, m, {
+        await conn.sendImageAsSticker(from, mediac, m, {
           packname: global.packname,
           author: global.author,
         });
@@ -747,7 +757,7 @@ module.exports = XeonBotInc = async (XeonBotInc, m, chatUpdate, store) => {
       } else if (/video/.test(mime)) {
         if ((quoted.msg || quoted).seconds > 11) return;
         let mediac = await quoted.download();
-        await XeonBotInc.sendVideoAsSticker(from, mediac, m, {
+        await conn.sendVideoAsSticker(from, mediac, m, {
           packname: global.packname,
           author: global.author,
         });
@@ -756,7 +766,7 @@ module.exports = XeonBotInc = async (XeonBotInc, m, chatUpdate, store) => {
 
     // AntiLinkgc
     if (AntiLink) {
-      linkgce = await XeonBotInc.groupInviteCode(from);
+      linkgce = await conn.groupInviteCode(from);
       if (budy.includes(`https://chat.whatsapp.com/${linkgce}`)) {
         reply(
           `\`\`\`「 Group Link Detected 」\`\`\`\n\nYou won't be kicked by a bot because what you send is a link to this group`
@@ -767,10 +777,10 @@ module.exports = XeonBotInc = async (XeonBotInc, m, chatUpdate, store) => {
         if (m.key.fromMe) return reply(bvl);
         if (isCreator) return reply(bvl);
         kice = m.sender;
-        await XeonBotInc.groupParticipantsUpdate(m.chat, [kice], "remove")
+        await conn.groupParticipantsUpdate(m.chat, [kice], "remove")
           .then((res) => reply(jsonformat(res)))
           .catch((err) => reply(jsonformat(err)));
-        XeonBotInc.sendMessage(
+        conn.sendMessage(
           from,
           {
             text: `\`\`\`「 Group Link Detected 」\`\`\`\n\n@${
@@ -792,8 +802,8 @@ module.exports = XeonBotInc = async (XeonBotInc, m, chatUpdate, store) => {
         if (m.key.fromMe) return reply(bvl);
         if (isCreator) return reply(bvl);
         kice = m.sender;
-        await XeonBotInc.groupParticipantsUpdate(m.chat, [kice], "remove");
-        XeonBotInc.sendMessage(
+        await conn.groupParticipantsUpdate(m.chat, [kice], "remove");
+        conn.sendMessage(
           from,
           {
             text: `\`\`\`「 Wa.me Link Detected 」\`\`\`\n\n@${
@@ -813,8 +823,8 @@ module.exports = XeonBotInc = async (XeonBotInc, m, chatUpdate, store) => {
         if (m.key.fromMe) return reply(bvl);
         if (isCreator) return reply(bvl);
         kice = m.sender;
-        await XeonBotInc.groupParticipantsUpdate(m.chat, [kice], "remove");
-        XeonBotInc.sendMessage(
+        await conn.groupParticipantsUpdate(m.chat, [kice], "remove");
+        conn.sendMessage(
           from,
           {
             text: `\`\`\`「 Wa.me Link Detected 」\`\`\`\n\n@${
@@ -832,7 +842,7 @@ module.exports = XeonBotInc = async (XeonBotInc, m, chatUpdate, store) => {
         reply(`Somebody spammed virus!! Mark as read⚠️\n`.repeat(300));
         reply(`\`\`\`「 Virus Detected 」\`\`\`\n\nSorry You Will Be Kicked !`);
         if (!isBotAdmins) return reply(mess.botAdmin);
-        XeonBotInc.groupParticipantsUpdate(m.chat, [m.sender], "remove");
+        conn.groupParticipantsUpdate(m.chat, [m.sender], "remove");
       }
     }
     //anti bad words by xeon
@@ -852,8 +862,8 @@ module.exports = XeonBotInc = async (XeonBotInc, m, chatUpdate, store) => {
           if (m.key.fromMe) return reply(bvl);
           if (isCreator) return reply(bvl);
           kice = m.sender;
-          await XeonBotInc.groupParticipantsUpdate(m.chat, [kice], "remove");
-          XeonBotInc.sendMessage(
+          await conn.groupParticipantsUpdate(m.chat, [kice], "remove");
+          conn.sendMessage(
             from,
             {
               text: `\`\`\`「 Bad Word Detected 」\`\`\`\n\n@${
@@ -874,8 +884,8 @@ module.exports = XeonBotInc = async (XeonBotInc, m, chatUpdate, store) => {
         if (m.key.fromMe) return reply(bvl);
         if (isCreator) return reply(bvl);
         kice = m.sender;
-        await XeonBotInc.groupParticipantsUpdate(m.chat, [kice], "remove");
-        XeonBotInc.sendMessage(
+        await conn.groupParticipantsUpdate(m.chat, [kice], "remove");
+        conn.sendMessage(
           from,
           {
             text: `\`\`\`「 YouTube Video Link Detected 」\`\`\`\n\n@${
@@ -896,8 +906,8 @@ module.exports = XeonBotInc = async (XeonBotInc, m, chatUpdate, store) => {
         if (m.key.fromMe) return reply(bvl);
         if (isCreator) return reply(bvl);
         kice = m.sender;
-        await XeonBotInc.groupParticipantsUpdate(m.chat, [kice], "remove");
-        XeonBotInc.sendMessage(
+        await conn.groupParticipantsUpdate(m.chat, [kice], "remove");
+        conn.sendMessage(
           from,
           {
             text: `\`\`\`「 YouTube Channel Link Detected 」\`\`\`\n\n@${
@@ -918,8 +928,8 @@ module.exports = XeonBotInc = async (XeonBotInc, m, chatUpdate, store) => {
         if (m.key.fromMe) return reply(bvl);
         if (isCreator) return reply(bvl);
         kice = m.sender;
-        await XeonBotInc.groupParticipantsUpdate(m.chat, [kice], "remove");
-        XeonBotInc.sendMessage(
+        await conn.groupParticipantsUpdate(m.chat, [kice], "remove");
+        conn.sendMessage(
           from,
           {
             text: `\`\`\`「 Instagram Link Detected 」\`\`\`\n\n@${
@@ -940,8 +950,8 @@ module.exports = XeonBotInc = async (XeonBotInc, m, chatUpdate, store) => {
         if (m.key.fromMe) return reply(bvl);
         if (isCreator) return reply(bvl);
         kice = m.sender;
-        await XeonBotInc.groupParticipantsUpdate(m.chat, [kice], "remove");
-        XeonBotInc.sendMessage(
+        await conn.groupParticipantsUpdate(m.chat, [kice], "remove");
+        conn.sendMessage(
           from,
           {
             text: `\`\`\`「 Facebook Link Detected 」\`\`\`\n\n@${
@@ -962,8 +972,8 @@ module.exports = XeonBotInc = async (XeonBotInc, m, chatUpdate, store) => {
         if (m.key.fromMe) return reply(bvl);
         if (isCreator) return reply(bvl);
         kice = m.sender;
-        await XeonBotInc.groupParticipantsUpdate(m.chat, [kice], "remove");
-        XeonBotInc.sendMessage(
+        await conn.groupParticipantsUpdate(m.chat, [kice], "remove");
+        conn.sendMessage(
           from,
           {
             text: `\`\`\`「 Telegram Link Detected 」\`\`\`\n\n@${
@@ -984,8 +994,8 @@ module.exports = XeonBotInc = async (XeonBotInc, m, chatUpdate, store) => {
         if (m.key.fromMe) return reply(bvl);
         if (isCreator) return reply(bvl);
         kice = m.sender;
-        await XeonBotInc.groupParticipantsUpdate(m.chat, [kice], "remove");
-        XeonBotInc.sendMessage(
+        await conn.groupParticipantsUpdate(m.chat, [kice], "remove");
+        conn.sendMessage(
           from,
           {
             text: `\`\`\`「 Tiktok Link Detected 」\`\`\`\n\n@${
@@ -1006,8 +1016,8 @@ module.exports = XeonBotInc = async (XeonBotInc, m, chatUpdate, store) => {
         if (m.key.fromMe) return reply(bvl);
         if (isCreator) return reply(bvl);
         kice = m.sender;
-        await XeonBotInc.groupParticipantsUpdate(m.chat, [kice], "remove");
-        XeonBotInc.sendMessage(
+        await conn.groupParticipantsUpdate(m.chat, [kice], "remove");
+        conn.sendMessage(
           from,
           {
             text: `\`\`\`「 Tiktok Link Detected 」\`\`\`\n\n@${
@@ -1028,8 +1038,8 @@ module.exports = XeonBotInc = async (XeonBotInc, m, chatUpdate, store) => {
         if (m.key.fromMe) return reply(bvl);
         if (isCreator) return reply(bvl);
         kice = m.sender;
-        await XeonBotInc.groupParticipantsUpdate(m.chat, [kice], "remove");
-        XeonBotInc.sendMessage(
+        await conn.groupParticipantsUpdate(m.chat, [kice], "remove");
+        conn.sendMessage(
           from,
           {
             text: `\`\`\`「 Link Detected 」\`\`\`\n\n@${
@@ -1047,14 +1057,14 @@ module.exports = XeonBotInc = async (XeonBotInc, m, chatUpdate, store) => {
     for (let anji of auto_sticker) {
       if (budy === anji) {
         result = fs.readFileSync(`./Media/sticker/${anji}.webp`);
-        XeonBotInc.sendMessage(m.chat, { sticker: result }, { quoted: m });
+        conn.sendMessage(m.chat, { sticker: result }, { quoted: m });
       }
     }
     //if (Autoreply) //remove forwad slashes to make it autoreply on off
     for (let anju of auto_audio) {
       if (budy === anju) {
         result = fs.readFileSync(`./Media/audio/${anju}.mp3`);
-        XeonBotInc.sendMessage(
+        conn.sendMessage(
           m.chat,
           { audio: result, mimetype: "audio/mp4", ptt: true },
           { quoted: m }
@@ -1065,14 +1075,14 @@ module.exports = XeonBotInc = async (XeonBotInc, m, chatUpdate, store) => {
     for (let anjh of auto_image) {
       if (budy === anjh) {
         result = fs.readFileSync(`./Media/image/${anjh}.jpg`);
-        XeonBotInc.sendMessage(m.chat, { image: result }, { quoted: m });
+        conn.sendMessage(m.chat, { image: result }, { quoted: m });
       }
     }
     //if (Autoreply) //remove forwad slashes to make it autoreply on off
     for (let anjh of auto_video) {
       if (budy === anjh) {
         result = fs.readFileSync(`./Media/video/${anjh}.mp4`);
-        XeonBotInc.sendMessage(m.chat, { video: result }, { quoted: m });
+        conn.sendMessage(m.chat, { video: result }, { quoted: m });
       }
     }
 
@@ -1092,7 +1102,7 @@ module.exports = XeonBotInc = async (XeonBotInc, m, chatUpdate, store) => {
             buttons: buttons,
             headerType: 4,
           };
-          XeonBotInc.sendMessage(from, buttonMessage, { quoted: m });
+          conn.sendMessage(from, buttonMessage, { quoted: m });
         });
       } catch (e) {
         reply(
@@ -1128,11 +1138,11 @@ module.exports = XeonBotInc = async (XeonBotInc, m, chatUpdate, store) => {
         m.chat,
         { text: text, mentions: mentionedJid },
         {
-          userJid: XeonBotInc.user.id,
+          userJid: conn.user.id,
           quoted: m.quoted && m.quoted.fakeObj,
         }
       );
-      messages.key.fromMe = areJidsSameUser(m.sender, XeonBotInc.user.id);
+      messages.key.fromMe = areJidsSameUser(m.sender, conn.user.id);
       messages.key.id = m.key.id;
       messages.pushName = m.pushName;
       if (m.isGroup) messages.participant = m.sender;
@@ -1141,7 +1151,7 @@ module.exports = XeonBotInc = async (XeonBotInc, m, chatUpdate, store) => {
         messages: [proto.WebMessageInfo.fromObject(messages)],
         type: "append",
       };
-      XeonBotInc.ev.emit("messages.upsert", msg);
+      conn.ev.emit("messages.upsert", msg);
     }
 
     if ("family100" + m.chat in _family100 && isCmd) {
@@ -1177,7 +1187,7 @@ ${Array.from(room.jawaban, (jawaban, index) => {
   .filter((v) => v)
   .join("\n")}
     ${isSurender ? "" : `Perfect Player`}`.trim();
-      XeonBotInc.sendText(m.chat, caption, m, {
+      conn.sendText(m.chat, caption, m, {
         contextInfo: { mentionedJid: parseMention(caption) },
       })
         .then((mes) => {
@@ -1191,7 +1201,7 @@ ${Array.from(room.jawaban, (jawaban, index) => {
       kuis = true;
       jawaban = tebaklagu[m.sender.split("@")[0]];
       if (budy.toLowerCase() == jawaban) {
-        await XeonBotInc.sendButtonText(
+        await conn.sendButtonText(
           m.chat,
           [
             {
@@ -1201,7 +1211,7 @@ ${Array.from(room.jawaban, (jawaban, index) => {
             },
           ],
           `🎮 Guess The Music 🎮\n\nCorrect Answer 🎉\n\nWant To Play Again? Press The Button Below`,
-          XeonBotInc.user.name,
+          conn.user.name,
           m
         );
         delete tebaklagu[m.sender.split("@")[0]];
@@ -1223,7 +1233,7 @@ ${Array.from(room.jawaban, (jawaban, index) => {
       kuis = true;
       jawaban = tebakgambar[m.sender.split("@")[0]];
       if (budy.toLowerCase() == jawaban) {
-        await XeonBotInc.sendButtonText(
+        await conn.sendButtonText(
           m.chat,
           [
             {
@@ -1233,7 +1243,7 @@ ${Array.from(room.jawaban, (jawaban, index) => {
             },
           ],
           `🎮 Guess The Picture 🎮\n\nCorrect Answer 🎉\n\nWant To Play Again? Press The Button Below`,
-          XeonBotInc.user.name,
+          conn.user.name,
           m
         );
         delete tebakgambar[m.sender.split("@")[0]];
@@ -1244,7 +1254,7 @@ ${Array.from(room.jawaban, (jawaban, index) => {
       kuis = true;
       jawaban = tebakkata[m.sender.split("@")[0]];
       if (budy.toLowerCase() == jawaban) {
-        await XeonBotInc.sendButtonText(
+        await conn.sendButtonText(
           m.chat,
           [
             {
@@ -1254,7 +1264,7 @@ ${Array.from(room.jawaban, (jawaban, index) => {
             },
           ],
           `🎮 Guess The Word 🎮\n\nCorrect Answer 🎉\n\nWant To Play Again? Press The Button Below`,
-          XeonBotInc.user.name,
+          conn.user.name,
           m
         );
         delete tebakkata[m.sender.split("@")[0]];
@@ -1266,7 +1276,7 @@ ${Array.from(room.jawaban, (jawaban, index) => {
       jawaban = caklontong[m.sender.split("@")[0]];
       deskripsi = caklontong_desk[m.sender.split("@")[0]];
       if (budy.toLowerCase() == jawaban) {
-        await XeonBotInc.sendButtonText(
+        await conn.sendButtonText(
           m.chat,
           [
             {
@@ -1276,7 +1286,7 @@ ${Array.from(room.jawaban, (jawaban, index) => {
             },
           ],
           `🎮 Guess The Blank 🎮\n\nCorrect Answer 🎉\n*${deskripsi}*\n\nWant To Play Again? Press The Button Below`,
-          XeonBotInc.user.name,
+          conn.user.name,
           m
         );
         delete caklontong[m.sender.split("@")[0]];
@@ -1288,7 +1298,7 @@ ${Array.from(room.jawaban, (jawaban, index) => {
       kuis = true;
       jawaban = tebakkalimat[m.sender.split("@")[0]];
       if (budy.toLowerCase() == jawaban) {
-        await XeonBotInc.sendButtonText(
+        await conn.sendButtonText(
           m.chat,
           [
             {
@@ -1298,7 +1308,7 @@ ${Array.from(room.jawaban, (jawaban, index) => {
             },
           ],
           `🎮 Guess The Sentence 🎮\n\nCorrect Answer 🎉\n\nWant To Play Again? Press The Button Below`,
-          XeonBotInc.user.name,
+          conn.user.name,
           m
         );
         delete tebakkalimat[m.sender.split("@")[0]];
@@ -1309,7 +1319,7 @@ ${Array.from(room.jawaban, (jawaban, index) => {
       kuis = true;
       jawaban = tebaklirik[m.sender.split("@")[0]];
       if (budy.toLowerCase() == jawaban) {
-        await XeonBotInc.sendButtonText(
+        await conn.sendButtonText(
           m.chat,
           [
             {
@@ -1319,7 +1329,7 @@ ${Array.from(room.jawaban, (jawaban, index) => {
             },
           ],
           `🎮 Guess The Lyrics 🎮\n\nCorrect Answer 🎉\n\nWant To Play Again? Press The Button Below`,
-          XeonBotInc.user.name,
+          conn.user.name,
           m
         );
         delete tebaklirik[m.sender.split("@")[0]];
@@ -1330,7 +1340,7 @@ ${Array.from(room.jawaban, (jawaban, index) => {
       kuis = true;
       jawaban = tebaktebakan[m.sender.split("@")[0]];
       if (budy.toLowerCase() == jawaban) {
-        await XeonBotInc.sendButtonText(
+        await conn.sendButtonText(
           m.chat,
           [
             {
@@ -1340,7 +1350,7 @@ ${Array.from(room.jawaban, (jawaban, index) => {
             },
           ],
           `🎮 Guess The Riddle 🎮\n\nCorrect Answer 🎉\n\nWant To Play Again? Press The Button Below`,
-          XeonBotInc.user.name,
+          conn.user.name,
           m
         );
         delete tebaktebakan[m.sender.split("@")[0]];
@@ -1431,10 +1441,10 @@ Typed *surrender* to surrender and admited defeat`;
       if ((room.game._currentTurn ^ isSurrender ? room.x : room.o) !== m.chat)
         room[room.game._currentTurn ^ isSurrender ? "x" : "o"] = m.chat;
       if (room.x !== room.o)
-        await XeonBotInc.sendText(room.x, str, m, {
+        await conn.sendText(room.x, str, m, {
           mentions: parseMention(str),
         });
-      await XeonBotInc.sendText(room.o, str, m, {
+      await conn.sendText(room.o, str, m, {
         mentions: parseMention(str),
       });
       if (isTie || isWin) {
@@ -1459,7 +1469,7 @@ Typed *surrender* to surrender and admited defeat`;
         roof.status == "wait"
       ) {
         if (/^(reject|no|later|n|nope(k.)?yes)/i.test(m.text)) {
-          XeonBotInc.sendTextWithMentions(
+          conn.sendTextWithMentions(
             m.chat,
             `@${roof.p2.split`@`[0]} Refuse Suit, Suit Canceled`,
             m
@@ -1471,7 +1481,7 @@ Typed *surrender* to surrender and admited defeat`;
         roof.asal = m.chat;
         clearTimeout(roof.waktu);
         //delete roof[roof.id].waktu
-        XeonBotInc.sendText(
+        conn.sendText(
           m.chat,
           `Suit Has Been Sent To Chat
 
@@ -1484,26 +1494,26 @@ Click https://wa.me/${botNumber.split`@`[0]}`,
           { mentions: [roof.p, roof.p2] }
         );
         if (!roof.pilih)
-          XeonBotInc.sendText(
+          conn.sendText(
             roof.p,
             `Please Select \n\Rock🗿\nPaper📄\nScissors✂️`,
             m
           );
         if (!roof.pilih2)
-          XeonBotInc.sendText(
+          conn.sendText(
             roof.p2,
             `Please Select \n\nRock🗿\nPaper📄\nScissors✂️`,
             m
           );
         roof.waktu_milih = setTimeout(() => {
           if (!roof.pilih && !roof.pilih2)
-            XeonBotInc.sendText(
+            conn.sendText(
               m.chat,
               `Both Players Don't Want To Play,\nSuit Canceled`
             );
           else if (!roof.pilih || !roof.pilih2) {
             win = !roof.pilih ? roof.p2 : roof.p;
-            XeonBotInc.sendTextWithMentions(
+            conn.sendTextWithMentions(
               m.chat,
               `@${
                 (roof.pilih ? roof.p2 : roof.p).split`@`[0]
@@ -1530,7 +1540,7 @@ Click https://wa.me/${botNumber.split`@`[0]}`,
           }`
         );
         if (!roof.pilih2)
-          XeonBotInc.sendText(
+          conn.sendText(
             roof.p2,
             "_The Opponent Has Chosen_\nNow It Is Your Turn",
             0
@@ -1545,7 +1555,7 @@ Click https://wa.me/${botNumber.split`@`[0]}`,
           }`
         );
         if (!roof.pilih)
-          XeonBotInc.sendText(
+          conn.sendText(
             roof.p,
             "_The Opponent Has Chosen_\nNow It Is Your Turn",
             0
@@ -1562,7 +1572,7 @@ Click https://wa.me/${botNumber.split`@`[0]}`,
         else if (k.test(stage) && b.test(stage2)) win = roof.p;
         else if (k.test(stage) && g.test(stage2)) win = roof.p2;
         else if (stage == stage2) tie = true;
-        XeonBotInc.sendText(
+        conn.sendText(
           roof.asal,
           `_*Suit Results*_${tie ? "\nSERIES" : ""}
 
@@ -1701,13 +1711,13 @@ In ${clockString(new Date() - user.afkTime)}
             if (isBanChat) return replay("Already Banned");
             banchat.push(from);
             replay("Success in banning the gc");
-            var groupe = await XeonBotInc.groupMetadata(from);
+            var groupe = await conn.groupMetadata(from);
             var members = groupe["participants"];
             var mems = [];
             members.map(async (adm) => {
               mems.push(adm.id.replace("c.us", "s.whatsapp.net"));
             });
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               from,
               {
                 text: `\`\`\`「 ⚠️Warning⚠️ 」\`\`\`\n\nThe bot has been disabled in this group, now no one will able to use the bot in this group!`,
@@ -1733,7 +1743,7 @@ In ${clockString(new Date() - user.afkTime)}
                 type: 1,
               },
             ];
-            await XeonBotInc.sendButtonText(
+            await conn.sendButtonText(
               m.chat,
               buttonsntnsfw,
               `Please click the button below\n\nBan to Ban\nUnban to unban`,
@@ -1791,7 +1801,7 @@ In ${clockString(new Date() - user.afkTime)}
             addInventoriBuruan(m.sender);
           }
 
-          var XeonBotInc = await getBuffer(picak + `User's Inventory`);
+          var conn = await getBuffer(picak + `User's Inventory`);
           let teksehmazeh = `_[ 👩🏻‍💼INFO USER👨🏻‍💼 ]_\n\n`;
           teksehmazeh += `*❤️Your Blood* : ${getDarah(m.sender)}\n`;
           teksehmazeh += `*◻️️Your Iron* : ${getBesi(m.sender)}\n`;
@@ -1807,11 +1817,11 @@ In ${clockString(new Date() - user.afkTime)}
           teksehmazeh += `*🐄Cow* : ${getSapi(m.sender)}\n`;
           teksehmazeh += `*🐘Elephant* : ${getGajah(m.sender)}\n\n`;
           teksehmazeh += `_*${pushname}*_`;
-          await XeonBotInc.send5ButImg(
+          await conn.send5ButImg(
             from,
             `` + "" + teksehmazeh,
             `© ${botname}`,
-            XeonBotInc,
+            conn,
             [{ urlButton: { displayText: "YouTube📍", url: `${websitex}` } }]
           );
         }
@@ -1879,7 +1889,7 @@ In ${clockString(new Date() - user.afkTime)}
               buttons: buttons,
               headerType: 4,
             };
-            XeonBotInc.sendMessage(from, buttonMessage, { quoted: m });
+            conn.sendMessage(from, buttonMessage, { quoted: m });
           }, 7000);
           setTimeout(() => {
             reply(`@${m.sender.split("@")[0]} Started Mining🎣`);
@@ -2283,7 +2293,7 @@ In ${clockString(new Date() - user.afkTime)}
               buttons: buttons,
               headerType: 4,
             };
-            XeonBotInc.sendMessage(from, buttonMessage, { quoted: m });
+            conn.sendMessage(from, buttonMessage, { quoted: m });
           }, 5000);
           setTimeout(() => {
             reply(`@${m.sender.split("@")[0]} Started Hunting In ${lokasinya}`);
@@ -2311,7 +2321,7 @@ In ${clockString(new Date() - user.afkTime)}
           if (!m.isGroup) return replay(mess.group);
           if (!isBotAdmins) return replay(mess.botAdmin);
           if (!isAdmins && !isCreator) return replay(mess.admin);
-          XeonBotInc.groupRevokeInvite(m.chat);
+          conn.groupRevokeInvite(m.chat);
         }
         break;
       case "afk":
@@ -2374,10 +2384,10 @@ Waiting @${room.game.currentTurn.split("@")[0]}
 
 Type *surrender* to surrender and admit defeat`;
             if (room.x !== room.o)
-              await XeonBotInc.sendText(room.x, str, m, {
+              await conn.sendText(room.x, str, m, {
                 mentions: parseMention(str),
               });
-            await XeonBotInc.sendText(room.o, str, m, {
+            await conn.sendText(room.o, str, m, {
               mentions: parseMention(str),
             });
           } else {
@@ -2408,7 +2418,7 @@ Type *surrender* to surrender and admit defeat`;
           try {
             if (this.game) {
               delete this.game;
-              XeonBotInc.sendText(
+              conn.sendText(
                 m.chat,
                 `Successfully Deleted The TicTacToe Session`,
                 m
@@ -2465,7 +2475,7 @@ Type *surrender* to surrender and admit defeat`;
 
 Please @${m.mentionedJid[0].split`@`[0]} To Type Accept/Reject`;
           this.suit[id] = {
-            chat: await XeonBotInc.sendText(m.chat, caption, m, {
+            chat: await conn.sendText(m.chat, caption, m, {
               mentions: parseMention(caption),
             }),
             id: id,
@@ -2474,7 +2484,7 @@ Please @${m.mentionedJid[0].split`@`[0]} To Type Accept/Reject`;
             status: "wait",
             waktu: setTimeout(() => {
               if (this.suit[id])
-                XeonBotInc.sendText(m.chat, `_Suit Time Out_`, m);
+                conn.sendText(m.chat, `_Suit Time Out_`, m);
               delete this.suit[id];
             }, 60000),
             poin,
@@ -2493,31 +2503,31 @@ Please @${m.mentionedJid[0].split`@`[0]} To Type Accept/Reject`;
               `Option : 1. mute\n2. unmute\n3. archive\n4. unarchive\n5. read\n6. unread\n7. delete`
             );
           if (args[0] === "mute") {
-            XeonBotInc.chatModify({ mute: "Infinity" }, m.chat, [])
+            conn.chatModify({ mute: "Infinity" }, m.chat, [])
               .then((res) => reply(jsonformat(res)))
               .catch((err) => reply(jsonformat(err)));
           } else if (args[0] === "unmute") {
-            XeonBotInc.chatModify({ mute: null }, m.chat, [])
+            conn.chatModify({ mute: null }, m.chat, [])
               .then((res) => reply(jsonformat(res)))
               .catch((err) => reply(jsonformat(err)));
           } else if (args[0] === "archive") {
-            XeonBotInc.chatModify({ archive: true }, m.chat, [])
+            conn.chatModify({ archive: true }, m.chat, [])
               .then((res) => reply(jsonformat(res)))
               .catch((err) => reply(jsonformat(err)));
           } else if (args[0] === "unarchive") {
-            XeonBotInc.chatModify({ archive: false }, m.chat, [])
+            conn.chatModify({ archive: false }, m.chat, [])
               .then((res) => reply(jsonformat(res)))
               .catch((err) => reply(jsonformat(err)));
           } else if (args[0] === "read") {
-            XeonBotInc.chatModify({ markRead: true }, m.chat, [])
+            conn.chatModify({ markRead: true }, m.chat, [])
               .then((res) => reply(jsonformat(res)))
               .catch((err) => reply(jsonformat(err)));
           } else if (args[0] === "unread") {
-            XeonBotInc.chatModify({ markRead: false }, m.chat, [])
+            conn.chatModify({ markRead: false }, m.chat, [])
               .then((res) => reply(jsonformat(res)))
               .catch((err) => reply(jsonformat(err)));
           } else if (args[0] === "delete") {
-            XeonBotInc.chatModify(
+            conn.chatModify(
               { clear: { message: { id: m.quoted.id, fromMe: true } } },
               m.chat,
               []
@@ -2548,7 +2558,7 @@ Please @${m.mentionedJid[0].split`@`[0]} To Type Accept/Reject`;
           }`.trim();
           _family100["family100" + m.chat] = {
             id: "family100" + m.chat,
-            pesan: await XeonBotInc.sendText(m.chat, hasil, m),
+            pesan: await conn.sendText(m.chat, hasil, m),
             ...random,
             terjawab: Array.from(random.jawaban, () => false),
             hadiah: 6,
@@ -2595,12 +2605,12 @@ Please @${m.mentionedJid[0].split`@`[0]} To Type Accept/Reject`;
               "https://fatiharridho.github.io/tebaklagu.json"
             );
             let result = anu[Math.floor(Math.random() * anu.length)];
-            let msg = await XeonBotInc.sendMessage(
+            let msg = await conn.sendMessage(
               m.chat,
               { audio: { url: result.link_song }, mimetype: "audio/mpeg" },
               { quoted: m }
             );
-            XeonBotInc.sendText(
+            conn.sendText(
               m.chat,
               `What is the name of this song?\n\nArtist : ${result.artist}\nTime : 60s`,
               msg
@@ -2610,7 +2620,7 @@ Please @${m.mentionedJid[0].split`@`[0]} To Type Accept/Reject`;
             await sleep(60000);
             if (tebaklagu.hasOwnProperty(m.sender.split("@")[0])) {
               console.log("Answer: " + result.jawaban);
-              XeonBotInc.sendButtonText(
+              conn.sendButtonText(
                 m.chat,
                 [
                   {
@@ -2634,7 +2644,7 @@ Please @${m.mentionedJid[0].split`@`[0]} To Type Accept/Reject`;
               "https://raw.githubusercontent.com/BochilTeam/database/master/games/tebakgambar.json"
             );
             let result = anu[Math.floor(Math.random() * anu.length)];
-            XeonBotInc.sendImage(
+            conn.sendImage(
               m.chat,
               result.img,
               `Please answer the question above\n\nDescription : ${result.deskripsi}\nTime : 60s`,
@@ -2646,7 +2656,7 @@ Please @${m.mentionedJid[0].split`@`[0]} To Type Accept/Reject`;
             await sleep(60000);
             if (tebakgambar.hasOwnProperty(m.sender.split("@")[0])) {
               console.log("Answer: " + result.jawaban);
-              XeonBotInc.sendButtonText(
+              conn.sendButtonText(
                 m.chat,
                 [
                   {
@@ -2670,7 +2680,7 @@ Please @${m.mentionedJid[0].split`@`[0]} To Type Accept/Reject`;
               "https://raw.githubusercontent.com/DGXeon/fungames/main/GuessTheWord.js"
             );
             let result = anu[Math.floor(Math.random() * anu.length)];
-            XeonBotInc.sendText(
+            conn.sendText(
               m.chat,
               `Please answer the following question\n\n${result.soal}\nTime : 60s`,
               m
@@ -2680,7 +2690,7 @@ Please @${m.mentionedJid[0].split`@`[0]} To Type Accept/Reject`;
             await sleep(60000);
             if (tebakkata.hasOwnProperty(m.sender.split("@")[0])) {
               console.log("Answer: " + result.jawaban);
-              XeonBotInc.sendButtonText(
+              conn.sendButtonText(
                 m.chat,
                 [
                   {
@@ -2704,7 +2714,7 @@ Please @${m.mentionedJid[0].split`@`[0]} To Type Accept/Reject`;
               "https://raw.githubusercontent.com/DGXeon/fungames/main/GuessTheSentence.js"
             );
             let result = anu[Math.floor(Math.random() * anu.length)];
-            XeonBotInc.sendText(
+            conn.sendText(
               m.chat,
               `Please answer the following question\n\n${result.soal}\nTime : 60s`,
               m
@@ -2715,7 +2725,7 @@ Please @${m.mentionedJid[0].split`@`[0]} To Type Accept/Reject`;
             await sleep(60000);
             if (tebakkalimat.hasOwnProperty(m.sender.split("@")[0])) {
               console.log("Answer: " + result.jawaban);
-              XeonBotInc.sendButtonText(
+              conn.sendButtonText(
                 m.chat,
                 [
                   {
@@ -2739,7 +2749,7 @@ Please @${m.mentionedJid[0].split`@`[0]} To Type Accept/Reject`;
               "https://raw.githubusercontent.com/BochilTeam/database/master/games/tebaklirik.json"
             );
             let result = anu[Math.floor(Math.random() * anu.length)];
-            XeonBotInc.sendText(
+            conn.sendText(
               m.chat,
               `Fill the missing lyrics below : *${result.soal}*?\nTime : 60s`,
               m
@@ -2749,7 +2759,7 @@ Please @${m.mentionedJid[0].split`@`[0]} To Type Accept/Reject`;
             await sleep(60000);
             if (tebaklirik.hasOwnProperty(m.sender.split("@")[0])) {
               console.log("Answer: " + result.jawaban);
-              XeonBotInc.sendButtonText(
+              conn.sendButtonText(
                 m.chat,
                 [
                   {
@@ -2773,7 +2783,7 @@ Please @${m.mentionedJid[0].split`@`[0]} To Type Accept/Reject`;
               "https://raw.githubusercontent.com/BochilTeam/database/master/games/caklontong.json"
             );
             let result = anu[Math.floor(Math.random() * anu.length)];
-            XeonBotInc.sendText(
+            conn.sendText(
               m.chat,
               `*Answer the following questions :*\n${result.soal}*\nTime : 60s`,
               m
@@ -2784,7 +2794,7 @@ Please @${m.mentionedJid[0].split`@`[0]} To Type Accept/Reject`;
             await sleep(60000);
             if (caklontong.hasOwnProperty(m.sender.split("@")[0])) {
               console.log("Answer: " + result.jawaban);
-              XeonBotInc.sendButtonText(
+              conn.sendButtonText(
                 m.chat,
                 [
                   {
@@ -2812,7 +2822,7 @@ Please @${m.mentionedJid[0].split`@`[0]} To Type Accept/Reject`;
         {
           if (isBan) return reply(mess.ban);
           if (isBanChat) return reply(mess.banChat);
-          XeonBotInc.sendMessage(m.chat, reactionMessage);
+          conn.sendMessage(m.chat, reactionMessage);
         }
         break;
 
@@ -2831,7 +2841,7 @@ Please @${m.mentionedJid[0].split`@`[0]} To Type Accept/Reject`;
               )}\nFor Examples: ${prefix}math medium`
             );
           let result = await genMath(text.toLowerCase());
-          XeonBotInc.sendText(
+          conn.sendText(
             m.chat,
             `*What Is The Result Of: ${result.soal.toLowerCase()}*?\n\nTime: ${(
               result.waktu / 1000
@@ -2863,11 +2873,11 @@ Please @${m.mentionedJid[0].split`@`[0]} To Type Accept/Reject`;
           let buttons = [
             { buttonId: "❤️", buttonText: { displayText: "❤️" }, type: 1 },
           ];
-          await XeonBotInc.sendButtonText(
+          await conn.sendButtonText(
             m.chat,
             buttons,
             jawab,
-            XeonBotInc.user.name,
+            conn.user.name,
             m,
             { mentions: ments }
           );
@@ -2887,11 +2897,11 @@ Cieeee, What's Going On❤️💖👀`;
           let buttons = [
             { buttonId: "❤️", buttonText: { displayText: "❤️" }, type: 1 },
           ];
-          await XeonBotInc.sendButtonText(
+          await conn.sendButtonText(
             m.chat,
             buttons,
             jawab,
-            XeonBotInc.user.name,
+            conn.user.name,
             m,
             { mentions: menst }
           );
@@ -2904,7 +2914,7 @@ Cieeee, What's Going On❤️💖👀`;
           return replay(`Use Text, Example : ${prefix + command} he married `);
         const apa = [`Yes`, `No`, `It Could Be`, `Thats right`];
         const kah = apa[Math.floor(Math.random() * apa.length)];
-        XeonBotInc.sendMessage(
+        conn.sendMessage(
           from,
           { text: `Question : Is ${q}\nAnswer : ${kah}` },
           { quoted: m }
@@ -2922,7 +2932,7 @@ Cieeee, What's Going On❤️💖👀`;
           `I Don't Know, Ask Your Father`,
         ];
         const kahk = lel[Math.floor(Math.random() * lel.length)];
-        XeonBotInc.sendMessage(
+        conn.sendMessage(
           from,
           { text: `Question : What ${q}\nAnswer : ${kahk}` },
           { quoted: m }
@@ -2938,7 +2948,7 @@ Cieeee, What's Going On❤️💖👀`;
           );
         const bisa = [`Can`, `Can't`, `Cannot`, `Of Course You Can!!!`];
         const ga = bisa[Math.floor(Math.random() * bisa.length)];
-        XeonBotInc.sendMessage(
+        conn.sendMessage(
           from,
           { text: `Question : Can ${q}\nAnswer : ${ga}` },
           { quoted: m }
@@ -2962,7 +2972,7 @@ Cieeee, What's Going On❤️💖👀`;
           `How Are You?`,
         ];
         const ya = gimana[Math.floor(Math.random() * gimana.length)];
-        XeonBotInc.sendMessage(
+        conn.sendMessage(
           from,
           { text: `Question : ${q}\nAnswer : How ${ya}` },
           { quoted: m }
@@ -3077,7 +3087,7 @@ Cieeee, What's Going On❤️💖👀`;
           "100",
         ];
         const te = ra[Math.floor(Math.random() * ra.length)];
-        XeonBotInc.sendMessage(
+        conn.sendMessage(
           from,
           { text: `Rate : ${q}\nAnswer : *${te}%*` },
           { quoted: m }
@@ -3192,7 +3202,7 @@ Cieeee, What's Going On❤️💖👀`;
           "100",
         ];
         const teng = gan[Math.floor(Math.random() * gan.length)];
-        XeonBotInc.sendMessage(
+        conn.sendMessage(
           from,
           { text: `*${command}*\n\nName : ${q}\nAnswer : *${teng}%*` },
           { quoted: m }
@@ -3307,7 +3317,7 @@ Cieeee, What's Going On❤️💖👀`;
           "100",
         ];
         const tik = can[Math.floor(Math.random() * can.length)];
-        XeonBotInc.sendMessage(
+        conn.sendMessage(
           from,
           { text: `*${command}*\n\nNama : ${q}\nAnswer : *${tik}%*` },
           { quoted: m }
@@ -3333,7 +3343,7 @@ Cieeee, What's Going On❤️💖👀`;
           "Helpful",
         ];
         const taky = xeony[Math.floor(Math.random() * xeony.length)];
-        XeonBotInc.sendMessage(
+        conn.sendMessage(
           from,
           { text: `Character Check : ${q}\nAnswer : *${taky}*` },
           { quoted: m }
@@ -3456,7 +3466,7 @@ Cieeee, What's Going On❤️💖👀`;
           "100",
         ];
         const sange = sangeh[Math.floor(Math.random() * sangeh.length)];
-        XeonBotInc.sendMessage(
+        conn.sendMessage(
           from,
           { text: `*${command}*\n\nName : ${q}\nAnswer : *${sange}%*` },
           { quoted: m }
@@ -3558,7 +3568,7 @@ Cieeee, What's Going On❤️💖👀`;
           let buttons = [
             { buttonId: "👀", buttonText: { displayText: "👀😂" }, type: 1 },
           ];
-          await XeonBotInc.sendButtonText(m.chat, buttons, jawab, botname, m, {
+          await conn.sendButtonText(m.chat, buttons, jawab, botname, m, {
             mentions: ments,
           });
         }
@@ -3653,7 +3663,7 @@ Cieeee, What's Going On❤️💖👀`;
         buffer = await getBuffer(
           `https://i.ibb.co/305yt26/bf84f20635dedd5dde31e7e5b6983ae9.jpg`
         );
-        XeonBotInc.sendMessage(
+        conn.sendMessage(
           from,
           { image: buffer, caption: "_You choose DARE_\n" + xeondare },
           { quoted: m }
@@ -3758,7 +3768,7 @@ Cieeee, What's Going On❤️💖👀`;
         buffer = await getBuffer(
           `https://i.ibb.co/305yt26/bf84f20635dedd5dde31e7e5b6983ae9.jpg`
         );
-        XeonBotInc.sendMessage(
+        conn.sendMessage(
           from,
           { image: buffer, caption: "_You choose TRUTH_\n" + xeontruth },
           { quoted: m }
@@ -3820,7 +3830,7 @@ Cieeee, What's Going On❤️💖👀`;
           `After This Command, You Too ${q}`,
         ];
         const kapankah = kapan[Math.floor(Math.random() * kapan.length)];
-        XeonBotInc.sendMessage(
+        conn.sendMessage(
           from,
           { text: `Question : ${q}\nAnswer : *${kapankah}*` },
           { quoted: m }
@@ -3857,7 +3867,7 @@ Cieeee, What's Going On❤️💖👀`;
             return replay(`Invalid Link!`);
           reply(mess.wait);
           let result = args[0].split("https://chat.whatsapp.com/")[1];
-          await XeonBotInc.groupAcceptInvite(result)
+          await conn.groupAcceptInvite(result)
             .then((res) => reply(jsonformat(res)))
             .catch((err) => reply(jsonformat(err)));
         }
@@ -3869,7 +3879,7 @@ Cieeee, What's Going On❤️💖👀`;
           if (isBanChat) return reply(mess.banChat);
           reply(mess.wait);
           if (!isCreator) return replay(`${mess.owner}`);
-          await XeonBotInc.groupLeave(m.chat)
+          await conn.groupLeave(m.chat)
             .then((res) => reply(jsonformat(res)))
             .catch((err) => reply(jsonformat(err)));
         }
@@ -3900,7 +3910,7 @@ Cieeee, What's Going On❤️💖👀`;
             : m.quoted
             ? m.quoted.sender
             : text.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
-          await XeonBotInc.groupParticipantsUpdate(m.chat, [users], "remove")
+          await conn.groupParticipantsUpdate(m.chat, [users], "remove")
             .then((res) => reply(jsonformat(res)))
             .catch((err) => reply(jsonformat(err)));
         }
@@ -3915,7 +3925,7 @@ Cieeee, What's Going On❤️💖👀`;
           let users = m.quoted
             ? m.quoted.sender
             : text.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
-          await XeonBotInc.groupParticipantsUpdate(m.chat, [users], "add")
+          await conn.groupParticipantsUpdate(m.chat, [users], "add")
             .then((res) => reply(jsonformat(res)))
             .catch((err) => reply(jsonformat(err)));
         }
@@ -3932,7 +3942,7 @@ Cieeee, What's Going On❤️💖👀`;
             : m.quoted
             ? m.quoted.sender
             : text.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
-          await XeonBotInc.groupParticipantsUpdate(m.chat, [users], "promote")
+          await conn.groupParticipantsUpdate(m.chat, [users], "promote")
             .then((res) => reply(jsonformat(res)))
             .catch((err) => reply(jsonformat(err)));
         }
@@ -3949,7 +3959,7 @@ Cieeee, What's Going On❤️💖👀`;
             : m.quoted
             ? m.quoted.sender
             : text.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
-          await XeonBotInc.groupParticipantsUpdate(m.chat, [users], "demote")
+          await conn.groupParticipantsUpdate(m.chat, [users], "demote")
             .then((res) => reply(jsonformat(res)))
             .catch((err) => reply(jsonformat(err)));
         }
@@ -3964,7 +3974,7 @@ Cieeee, What's Going On❤️💖👀`;
             : m.quoted
             ? m.quoted.sender
             : text.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
-          await XeonBotInc.updateBlockStatus(users, "block")
+          await conn.updateBlockStatus(users, "block")
             .then((res) => reply(jsonformat(res)))
             .catch((err) => reply(jsonformat(err)));
         }
@@ -3979,7 +3989,7 @@ Cieeee, What's Going On❤️💖👀`;
             : m.quoted
             ? m.quoted.sender
             : text.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
-          await XeonBotInc.updateBlockStatus(users, "unblock")
+          await conn.updateBlockStatus(users, "unblock")
             .then((res) => reply(jsonformat(res)))
             .catch((err) => reply(jsonformat(err)));
         }
@@ -3994,7 +4004,7 @@ Cieeee, What's Going On❤️💖👀`;
           if (!isBotAdmins) return replay(`${mess.botAdmin}`);
           if (!isAdmins) replay(`${mess.admin}`);
           if (!text) replay(`Where Is The Text?`);
-          await XeonBotInc.groupUpdateSubject(m.chat, text)
+          await conn.groupUpdateSubject(m.chat, text)
             .then((res) => reply(mess.success))
             .catch((err) => reply(jsonformat(err)));
         }
@@ -4008,7 +4018,7 @@ Cieeee, What's Going On❤️💖👀`;
           if (!isBotAdmins) return replay(`${mess.botAdmin}`);
           if (!isAdmins) replay(`${mess.admin}`);
           if (!text) replay(`Where Is The Text?`);
-          await XeonBotInc.groupUpdateDescription(m.chat, text)
+          await conn.groupUpdateDescription(m.chat, text)
             .then((res) => reply(mess.success))
             .catch((err) => reply(jsonformat(err)));
         }
@@ -4024,8 +4034,8 @@ Cieeee, What's Going On❤️💖👀`;
             return replay(`Send/Reply Image With Caption ${prefix + command}`);
           if (/webp/.test(mime))
             return replay(`Send/Reply Image With Caption ${prefix + command}`);
-          let media = await XeonBotInc.downloadAndSaveMediaMessage(quoted);
-          await XeonBotInc.updateProfilePicture(botNumber, {
+          let media = await conn.downloadAndSaveMediaMessage(quoted);
+          await conn.updateProfilePicture(botNumber, {
             url: media,
           }).catch((err) => fs.unlinkSync(media));
           reply(mess.success);
@@ -4045,8 +4055,8 @@ Cieeee, What's Going On❤️💖👀`;
             return replay(`Send/Reply Image With Caption ${prefix + command}`);
           if (/webp/.test(mime))
             return replay(`Send/Reply Image With Caption ${prefix + command}`);
-          let media = await XeonBotInc.downloadAndSaveMediaMessage(quoted);
-          await XeonBotInc.updateProfilePicture(m.chat, { url: media }).catch(
+          let media = await conn.downloadAndSaveMediaMessage(quoted);
+          await conn.updateProfilePicture(m.chat, { url: media }).catch(
             (err) => fs.unlinkSync(media)
           );
           reply(mess.success);
@@ -4065,7 +4075,7 @@ Cieeee, What's Going On❤️💖👀`;
           for (let mem of participants) {
             teks += `${themeemoji} @${mem.id.split("@")[0]}\n`;
           }
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             m.chat,
             { text: teks, mentions: participants.map((a) => a.id) },
             { quoted: m }
@@ -4079,7 +4089,7 @@ Cieeee, What's Going On❤️💖👀`;
           if (!m.isGroup) return replay(`${mess.group}`);
           if (!isBotAdmins) return replay(`${mess.botAdmin}`);
           if (!isAdmins) return replay(`${mess.admin}`);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             m.chat,
             { text: q ? q : "", mentions: participants.map((a) => a.id) },
             { quoted: m }
@@ -4160,11 +4170,11 @@ Cieeee, What's Going On❤️💖👀`;
 
           let buttonMessageVote = {
             text: teks_vote,
-            footer: XeonBotInc.user.name,
+            footer: conn.user.name,
             buttons: buttonsVote,
             headerType: 1,
           };
-          XeonBotInc.sendMessage(m.chat, buttonMessageVote);
+          conn.sendMessage(m.chat, buttonMessageVote);
         }
         break;
       case "upvote":
@@ -4215,12 +4225,12 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
 
           let buttonMessageUpvote = {
             text: teks_vote,
-            footer: XeonBotInc.user.name,
+            footer: conn.user.name,
             buttons: buttonsUpvote,
             headerType: 1,
             mentions: menvote,
           };
-          XeonBotInc.sendMessage(m.chat, buttonMessageUpvote);
+          conn.sendMessage(m.chat, buttonMessageUpvote);
         }
         break;
       case "devote":
@@ -4271,12 +4281,12 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
 
           let buttonMessageDevote = {
             text: teks_vote,
-            footer: XeonBotInc.user.name,
+            footer: conn.user.name,
             buttons: buttonsDevote,
             headerType: 1,
             mentions: menvote,
           };
-          XeonBotInc.sendMessage(m.chat, buttonMessageDevote);
+          conn.sendMessage(m.chat, buttonMessageDevote);
         }
         break;
 
@@ -4309,9 +4319,9 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
 *${prefix}delvote* - To Delete Vote Session
 
 
-©${XeonBotInc.user.id}
+©${conn.user.id}
 `;
-        XeonBotInc.sendTextWithMentions(m.chat, teks_vote, m);
+        conn.sendTextWithMentions(m.chat, teks_vote, m);
         break;
       case "deletevote":
       case "delvote":
@@ -4337,11 +4347,11 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           if (!isBotAdmins) return replay(`${mess.botAdmin}`);
           if (!isAdmins) return replay(`${mess.admin}`);
           if (args[0] === "close") {
-            await XeonBotInc.groupSettingUpdate(m.chat, "announcement")
+            await conn.groupSettingUpdate(m.chat, "announcement")
               .then((res) => reply(`Successful Closing The Group`))
               .catch((err) => reply(jsonformat(err)));
           } else if (args[0] === "open") {
-            await XeonBotInc.groupSettingUpdate(m.chat, "not_announcement")
+            await conn.groupSettingUpdate(m.chat, "not_announcement")
               .then((res) => reply(`Successful Opening The Group`))
               .catch((err) => reply(jsonformat(err)));
           } else {
@@ -4357,11 +4367,11 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
                 type: 1,
               },
             ];
-            await XeonBotInc.sendButtonText(
+            await conn.sendButtonText(
               m.chat,
               buttons,
               `Group Mode`,
-              XeonBotInc.user.name,
+              conn.user.name,
               m
             );
           }
@@ -4375,11 +4385,11 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           if (!isBotAdmins) return replay(`${mess.botAdmin}`);
           if (!isAdmins) return replay(`${mess.admin}`);
           if (args[0] === "open") {
-            await XeonBotInc.groupSettingUpdate(m.chat, "unlocked")
+            await conn.groupSettingUpdate(m.chat, "unlocked")
               .then((res) => reply(`Successfully Opened Edit Group Info`))
               .catch((err) => reply(jsonformat(err)));
           } else if (args[0] === "close") {
-            await XeonBotInc.groupSettingUpdate(m.chat, "locked")
+            await conn.groupSettingUpdate(m.chat, "locked")
               .then((res) => reply(`Successfully Closed Edit Group Info`))
               .catch((err) => reply(jsonformat(err)));
           } else {
@@ -4395,11 +4405,11 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
                 type: 1,
               },
             ];
-            await XeonBotInc.sendButtonText(
+            await conn.sendButtonText(
               m.chat,
               buttons,
               `Mode Edit Info`,
-              XeonBotInc.user.name,
+              conn.user.name,
               m
             );
           }
@@ -4472,13 +4482,13 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             if (AntiLink) return replay("Already activated");
             ntilink.push(from);
             replay("Success in turning on group chat antilink in this group");
-            var groupe = await XeonBotInc.groupMetadata(from);
+            var groupe = await conn.groupMetadata(from);
             var members = groupe["participants"];
             var mems = [];
             members.map(async (adm) => {
               mems.push(adm.id.replace("c.us", "s.whatsapp.net"));
             });
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               from,
               {
                 text: `\`\`\`「 ⚠️Warning⚠️ 」\`\`\`\n\nIf you're not an admin, don't send the group link in this group or u will be kicked immediately`,
@@ -4504,7 +4514,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
                 type: 1,
               },
             ];
-            await XeonBotInc.sendButtonText(
+            await conn.sendButtonText(
               m.chat,
               buttonsntilink,
               `Please click the button below\n\nOn to enable\nOff to disable`,
@@ -4529,13 +4539,13 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             replay(
               "Success in turning on youtube video antilink in this group"
             );
-            var groupe = await XeonBotInc.groupMetadata(from);
+            var groupe = await conn.groupMetadata(from);
             var members = groupe["participants"];
             var mems = [];
             members.map(async (adm) => {
               mems.push(adm.id.replace("c.us", "s.whatsapp.net"));
             });
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               from,
               {
                 text: `\`\`\`「 ⚠️Warning⚠️ 」\`\`\`\n\nIf you're not an admin, don't send the youtube video link in this group or u will be kicked immediately!`,
@@ -4563,7 +4573,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
                 type: 1,
               },
             ];
-            await XeonBotInc.sendButtonText(
+            await conn.sendButtonText(
               m.chat,
               buttonsntilink,
               `Please click the button below\n\nOn to enable\nOff to disable`,
@@ -4588,13 +4598,13 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             replay(
               "Success in turning on youtube channel antilink in this group"
             );
-            var groupe = await XeonBotInc.groupMetadata(from);
+            var groupe = await conn.groupMetadata(from);
             var members = groupe["participants"];
             var mems = [];
             members.map(async (adm) => {
               mems.push(adm.id.replace("c.us", "s.whatsapp.net"));
             });
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               from,
               {
                 text: `\`\`\`「 ⚠️Warning⚠️ 」\`\`\`\n\nIf you're not an admin, don't send the youtube channel link in this group or u will be kicked immediately!`,
@@ -4622,7 +4632,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
                 type: 1,
               },
             ];
-            await XeonBotInc.sendButtonText(
+            await conn.sendButtonText(
               m.chat,
               buttonsntilink,
               `Please click the button below\n\nOn to enable\nOff to disable`,
@@ -4645,13 +4655,13 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             if (AntiLinkInstagram) return replay("Already activated");
             ntilinkig.push(from);
             replay("Success in turning on instagram antilink in this group");
-            var groupe = await XeonBotInc.groupMetadata(from);
+            var groupe = await conn.groupMetadata(from);
             var members = groupe["participants"];
             var mems = [];
             members.map(async (adm) => {
               mems.push(adm.id.replace("c.us", "s.whatsapp.net"));
             });
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               from,
               {
                 text: `\`\`\`「 ⚠️Warning⚠️ 」\`\`\`\n\nIf you're not an admin, don't send the instagram link in this group or u will be kicked immediately!`,
@@ -4677,7 +4687,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
                 type: 1,
               },
             ];
-            await XeonBotInc.sendButtonText(
+            await conn.sendButtonText(
               m.chat,
               buttonsntilink,
               `Please click the button below\n\nOn to enable\nOff to disable`,
@@ -4699,13 +4709,13 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             if (AntiLinkFacebook) return replay("Already activated");
             ntilinkfb.push(from);
             replay("Success in turning on facebook antilink in this group");
-            var groupe = await XeonBotInc.groupMetadata(from);
+            var groupe = await conn.groupMetadata(from);
             var members = groupe["participants"];
             var mems = [];
             members.map(async (adm) => {
               mems.push(adm.id.replace("c.us", "s.whatsapp.net"));
             });
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               from,
               {
                 text: `\`\`\`「 ⚠️Warning⚠️ 」\`\`\`\n\nIf you're not an admin, don't send the facebook link in this group or u will be kicked immediately!`,
@@ -4731,7 +4741,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
                 type: 1,
               },
             ];
-            await XeonBotInc.sendButtonText(
+            await conn.sendButtonText(
               m.chat,
               buttonsntilink,
               `Please click the button below\n\nOn to enable\nOff to disable`,
@@ -4753,13 +4763,13 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             if (AntiLinkTelegram) return replay("Already activated");
             ntilinktg.push(from);
             replay("Success in turning on telegram antilink in this group");
-            var groupe = await XeonBotInc.groupMetadata(from);
+            var groupe = await conn.groupMetadata(from);
             var members = groupe["participants"];
             var mems = [];
             members.map(async (adm) => {
               mems.push(adm.id.replace("c.us", "s.whatsapp.net"));
             });
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               from,
               {
                 text: `\`\`\`「 ⚠️Warning⚠️ 」\`\`\`\n\nIf you're not an admin, don't send the telegram link in this group or u will be kicked immediately!`,
@@ -4785,7 +4795,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
                 type: 1,
               },
             ];
-            await XeonBotInc.sendButtonText(
+            await conn.sendButtonText(
               m.chat,
               buttonsntilink,
               `Please click the button below\n\nOn to enable\nOff to disable`,
@@ -4807,13 +4817,13 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             if (AntiLinkTiktok) return replay("Already activated");
             ntilinktt.push(from);
             replay("Success in turning on tiktok antilink in this group");
-            var groupe = await XeonBotInc.groupMetadata(from);
+            var groupe = await conn.groupMetadata(from);
             var members = groupe["participants"];
             var mems = [];
             members.map(async (adm) => {
               mems.push(adm.id.replace("c.us", "s.whatsapp.net"));
             });
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               from,
               {
                 text: `\`\`\`「 ⚠️Warning⚠️ 」\`\`\`\n\nIf you're not an admin, don't send the tiktok link in this group or u will be kicked immediately!`,
@@ -4839,7 +4849,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
                 type: 1,
               },
             ];
-            await XeonBotInc.sendButtonText(
+            await conn.sendButtonText(
               m.chat,
               buttonsntilink,
               `Please click the button below\n\nOn to enable\nOff to disable`,
@@ -4862,13 +4872,13 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             if (AntiLinkTwitter) return replay("Already activated");
             ntilinktwt.push(from);
             replay("Success in turning on twitter antilink in this group");
-            var groupe = await XeonBotInc.groupMetadata(from);
+            var groupe = await conn.groupMetadata(from);
             var members = groupe["participants"];
             var mems = [];
             members.map(async (adm) => {
               mems.push(adm.id.replace("c.us", "s.whatsapp.net"));
             });
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               from,
               {
                 text: `\`\`\`「 ⚠️Warning⚠️ 」\`\`\`\n\nIf you're not an admin, don't send the twitter link in this group or u will be kicked immediately!`,
@@ -4894,7 +4904,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
                 type: 1,
               },
             ];
-            await XeonBotInc.sendButtonText(
+            await conn.sendButtonText(
               m.chat,
               buttonsntilink,
               `Please click the button below\n\nOn to enable\nOff to disable`,
@@ -4915,13 +4925,13 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             if (AntiLinkTwitter) return replay("Already activated");
             ntilinkall.push(from);
             replay("Success in turning on all antilink in this group");
-            var groupe = await XeonBotInc.groupMetadata(from);
+            var groupe = await conn.groupMetadata(from);
             var members = groupe["participants"];
             var mems = [];
             members.map(async (adm) => {
               mems.push(adm.id.replace("c.us", "s.whatsapp.net"));
             });
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               from,
               {
                 text: `\`\`\`「 ⚠️Warning⚠️ 」\`\`\`\n\nIf you're not an admin, don't send any link in this group or u will be kicked immediately!`,
@@ -4947,7 +4957,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
                 type: 1,
               },
             ];
-            await XeonBotInc.sendButtonText(
+            await conn.sendButtonText(
               m.chat,
               buttonsntilink,
               `Please click the button below\n\nOn to enable\nOff to disable`,
@@ -4969,13 +4979,13 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             if (antiVirtex) return replay("Already activated");
             ntvirtex.push(from);
             replay("Success in turning on antivirus in this group");
-            var groupe = await XeonBotInc.groupMetadata(from);
+            var groupe = await conn.groupMetadata(from);
             var members = groupe["participants"];
             var mems = [];
             members.map(async (adm) => {
               mems.push(adm.id.replace("c.us", "s.whatsapp.net"));
             });
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               from,
               {
                 text: `\`\`\`「 ⚠️Warning⚠️ 」\`\`\`\n\nNo body is allowed to send virus in this group, member who send will be kicked immediately!`,
@@ -5001,7 +5011,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
                 type: 1,
               },
             ];
-            await XeonBotInc.sendButtonText(
+            await conn.sendButtonText(
               m.chat,
               buttonsntvirtex,
               `Please click the button below\n\nOn to enable\nOff to disable`,
@@ -5040,7 +5050,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
                 type: 1,
               },
             ];
-            await XeonBotInc.sendButtonText(
+            await conn.sendButtonText(
               m.chat,
               buttonswlcm,
               `Please click the button below\n\nOn to enable\nOff to disable`,
@@ -5061,13 +5071,13 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             if (antiToxic) return replay("Already activated");
             nttoxic.push(from);
             replay("Success in turning on antitoxic in this group");
-            var groupe = await XeonBotInc.groupMetadata(from);
+            var groupe = await conn.groupMetadata(from);
             var members = groupe["participants"];
             var mems = [];
             members.map(async (adm) => {
               mems.push(adm.id.replace("c.us", "s.whatsapp.net"));
             });
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               from,
               {
                 text: `\`\`\`「 ⚠️Warning⚠️ 」\`\`\`\n\nNobody is allowed to use bad words in this group, one who uses will be kicked immediately!`,
@@ -5093,7 +5103,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
                 type: 1,
               },
             ];
-            await XeonBotInc.sendButtonText(
+            await conn.sendButtonText(
               m.chat,
               buttonsnttoxic,
               `Please click the button below\n\nOn to enable\nOff to disable`,
@@ -5114,13 +5124,13 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             if (antiWame) return replay("Already activated");
             ntwame.push(from);
             replay("Success in turning on antiwame in this group");
-            var groupe = await XeonBotInc.groupMetadata(from);
+            var groupe = await conn.groupMetadata(from);
             var members = groupe["participants"];
             var mems = [];
             members.map(async (adm) => {
               mems.push(adm.id.replace("c.us", "s.whatsapp.net"));
             });
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               from,
               {
                 text: `\`\`\`「 ⚠️Warning⚠️ 」\`\`\`\n\nNobody is allowed to send wa.me in this group, one who sends will be kicked immediately!`,
@@ -5146,7 +5156,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
                 type: 1,
               },
             ];
-            await XeonBotInc.sendButtonText(
+            await conn.sendButtonText(
               m.chat,
               buttonsntwame,
               `Please click the button below\n\nOn to enable\nOff to disable`,
@@ -5167,13 +5177,13 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             if (AntiNsfw) return replay("Already activated");
             ntnsfw.push(from);
             replay("Success in turning on nsfw in this group");
-            var groupe = await XeonBotInc.groupMetadata(from);
+            var groupe = await conn.groupMetadata(from);
             var members = groupe["participants"];
             var mems = [];
             members.map(async (adm) => {
               mems.push(adm.id.replace("c.us", "s.whatsapp.net"));
             });
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               from,
               {
                 text: `\`\`\`「 ⚠️Warning⚠️ 」\`\`\`\n\nNsfw(not safe for work) feature has been enabled in this group, which means one can access sexual graphics from the bot!`,
@@ -5199,7 +5209,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
                 type: 1,
               },
             ];
-            await XeonBotInc.sendButtonText(
+            await conn.sendButtonText(
               m.chat,
               buttonsntnsfw,
               `Please click the button below\n\nOn to enable\nOff to disable`,
@@ -5219,12 +5229,12 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           if (args[0] === "on") {
             if (db.data.chats[m.chat].mute) return reply(`Previously Active`);
             db.data.chats[m.chat].mute = true;
-            reply(`${XeonBotInc.user.name} Has Been Muted In This Group !`);
+            reply(`${conn.user.name} Has Been Muted In This Group !`);
           } else if (args[0] === "off") {
             if (!db.data.chats[m.chat].mute)
               return reply(`Previously Inactive`);
             db.data.chats[m.chat].mute = false;
-            reply(`${XeonBotInc.user.name} Has Been Unmuted In This Group!`);
+            reply(`${conn.user.name} Has Been Unmuted In This Group!`);
           } else {
             let buttons = [
               {
@@ -5238,11 +5248,11 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
                 type: 1,
               },
             ];
-            await XeonBotInc.sendButtonText(
+            await conn.sendButtonText(
               m.chat,
               buttons,
               `Mute Bot`,
-              XeonBotInc.user.name,
+              conn.user.name,
               m
             );
           }
@@ -5260,8 +5270,8 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             return replay(`Send/Reply Image With Caption ${prefix + command}`);
           if (/webp/.test(mime))
             return replay(`Send/Reply Image With Caption ${prefix + command}`);
-          let media = await XeonBotInc.downloadAndSaveMediaMessage(quoted);
-          await XeonBotInc.updateProfilePicture(botNumber, {
+          let media = await conn.downloadAndSaveMediaMessage(quoted);
+          await conn.updateProfilePicture(botNumber, {
             url: media,
           }).catch((err) => fs.unlinkSync(media));
           replay(mess.success);
@@ -5275,8 +5285,8 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           if (isBan) return reply(mess.ban);
           if (isBanChat) return reply(mess.banChat);
           if (!m.isGroup) return replay(`${mess.group}`);
-          let response = await XeonBotInc.groupInviteCode(m.chat);
-          XeonBotInc.sendText(
+          let response = await conn.groupInviteCode(m.chat);
+          conn.sendText(
             m.chat,
             `https://chat.whatsapp.com/${response}\n\n${groupMetadata.subject} Group Link`,
             m,
@@ -5293,13 +5303,13 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           if (!isAdmins) return replay(`${mess.admin}`);
           if (!text) return replay(`Enter The enable/disable Values`);
           if (args[0] === "enable") {
-            await XeonBotInc.sendMessage(m.chat, {
+            await conn.sendMessage(m.chat, {
               disappearingMessagesInChat: WA_DEFAULT_EPHEMERAL,
             })
               .then((res) => reply(jsonformat(res)))
               .catch((err) => reply(jsonformat(err)));
           } else if (args[0] === "disable") {
-            await XeonBotInc.sendMessage(m.chat, {
+            await conn.sendMessage(m.chat, {
               disappearingMessagesInChat: false,
             })
               .then((res) => reply(jsonformat(res)))
@@ -5413,7 +5423,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             };
             sections.push(yy);
           }
-          const sendm = XeonBotInc.sendMessage(
+          const sendm = conn.sendMessage(
             from,
             {
               text: "Group Settings",
@@ -5435,7 +5445,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           if (!m.quoted) reply(false);
           let { chat, fromMe, id, isBaileys } = m.quoted;
           if (!isBaileys) return replay(`The Message Was Not Sent By A Bot!`);
-          XeonBotInc.sendMessage(m.chat, {
+          conn.sendMessage(m.chat, {
             delete: {
               remoteJid: m.chat,
               fromMe: true,
@@ -5457,7 +5467,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
                 global.ownername
               }`
             );
-          let getGroups = await XeonBotInc.groupFetchAllParticipating();
+          let getGroups = await conn.groupFetchAllParticipating();
           let groups = Object.entries(getGroups)
             .slice(0)
             .map((entry) => entry[1]);
@@ -5502,7 +5512,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
               },
             ];
             let txt = `*「 ${global.ownername}'s Broadcast」*\n\n${text}`;
-            XeonBotInc.send5ButImg(
+            conn.send5ButImg(
               i,
               txt,
               `${global.botname}`,
@@ -5568,7 +5578,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
               },
             ];
             let txt = `*「 ${global.ownername}'s Broadcast」*\n\n${text}`;
-            XeonBotInc.send5ButImg(
+            conn.send5ButImg(
               yoi,
               txt,
               `${global.botname}`,
@@ -5653,10 +5663,10 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
                 },
               },
             ];
-            let media = await XeonBotInc.downloadAndSaveMediaMessage(quoted);
+            let media = await conn.downloadAndSaveMediaMessage(quoted);
             let buffer = fs.readFileSync(media);
             if (/webp/.test(mime)) {
-              XeonBotInc.sendMessage(
+              conn.sendMessage(
                 i,
                 { sticker: { url: media } },
                 { quoted: ftroli }
@@ -5665,7 +5675,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
               let DGXeon = `*「 ${global.ownername}'s Broadcast」*${
                 text ? "\n\n" + text : ""
               }`;
-              XeonBotInc.send5ButImg(
+              conn.send5ButImg(
                 i,
                 DGXeon,
                 `${global.botname}`,
@@ -5676,13 +5686,13 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
               let DGXeon = `*「 ${global.ownername}'s Broadcast」*${
                 text ? "\n\n" + text : ""
               }`;
-              XeonBotInc.sendMessage(
+              conn.sendMessage(
                 i,
                 { video: buffer, caption: `${DGXeon}` },
                 { quoted: ftroli }
               );
             } else if (/audio/.test(mime)) {
-              XeonBotInc.sendMessage(
+              conn.sendMessage(
                 i,
                 { audio: buffer, mimetype: "audio/mpeg" },
                 { quoted: ftroli }
@@ -5726,7 +5736,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
                 type: 1,
               },
             ];
-            XeonBotInc.sendMessage(yoi, {
+            conn.sendMessage(yoi, {
               caption: `${melo}`,
               location: {
                 jpegThumbnail: await getBuffer(
@@ -5760,7 +5770,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
               read ? "Read" : "Sent"
             }\n\n`;
           }
-          XeonBotInc.sendTextWithMentions(m.chat, teks, m);
+          conn.sendTextWithMentions(m.chat, teks, m);
         }
         break;
       case "q":
@@ -5769,7 +5779,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           if (isBan) return reply(mess.ban);
           if (isBanChat) return reply(mess.banChat);
           if (!m.quoted) return replay("Reply Message!!");
-          let wokwol = await XeonBotInc.serializeM(await m.getQuotedObj());
+          let wokwol = await conn.serializeM(await m.getQuotedObj());
           if (!wokwol.quoted)
             return replay(
               "The message you replied to does not contain a reply"
@@ -5793,7 +5803,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
               .tz("Asia/Kolkata")
               .format("DD/MM/YYYY HH:mm:ss")}`;
           }
-          XeonBotInc.sendTextWithMentions(m.chat, teks, m);
+          conn.sendTextWithMentions(m.chat, teks, m);
         }
         break;
       case "listgc":
@@ -5806,7 +5816,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             .map((v) => v.id);
           let teks = `     「 Group Chat 」\n\nThere are ${anu.length} users using bot in group chat`;
           for (let i of anu) {
-            let metadata = await XeonBotInc.groupMetadata(i);
+            let metadata = await conn.groupMetadata(i);
             if (metadata.owner === "undefined") {
               loldd = false;
             } else {
@@ -5828,7 +5838,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
                 : "undefined"
             }`;
           }
-          XeonBotInc.sendTextWithMentions(m.chat, teks, m);
+          conn.sendTextWithMentions(m.chat, teks, m);
         }
         break;
       case "listonline":
@@ -5840,7 +5850,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let id = args && /\d+\-\d+@g.us/.test(args[0]) ? args[0] : m.chat;
           let online = [...Object.keys(store.presences[id]), botNumber];
           let liston = 1;
-          XeonBotInc.sendText(
+          conn.sendText(
             m.chat,
             "     「 Online List 」\n\n" +
               online.map((v) => `${liston++} . @` + v.replace(/@.+/, ""))
@@ -5861,7 +5871,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           var wifegerak = ano.split("\n");
           var wifegerakx =
             wifegerak[Math.floor(Math.random() * wifegerak.length)];
-          encmedia = await XeonBotInc.sendImageAsSticker(from, wifegerakx, m, {
+          encmedia = await conn.sendImageAsSticker(from, wifegerakx, m, {
             packname: global.packname,
             author: global.author,
           });
@@ -5873,7 +5883,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           if (isBan) return reply(mess.ban);
           if (isBanChat) return reply(mess.banChat);
           if (!text) return reply(`Example : ${prefix + command} text`);
-          await XeonBotInc.sendMedia(
+          await conn.sendMedia(
             m.chat,
             `https://xteam.xyz/${command}?file&text=${text}`,
             "hisoka",
@@ -5893,7 +5903,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
                 prefix + command
               } ${ownername}*`
             );
-          await XeonBotInc.sendMedia(
+          await conn.sendMedia(
             m.chat,
             `https://cililitan.herokuapp.com/api/attp?teks=${text}`,
             "Xeon",
@@ -5908,7 +5918,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           if (isBan) return reply(mess.ban);
           if (isBanChat) return reply(mess.banChat);
           if (!text) return reply(`*Example : ${prefix + command} hello*`);
-          await XeonBotInc.sendMedia(
+          await conn.sendMedia(
             m.chat,
             `https://cililitan.herokuapp.com/api/texttopng2?teks=${text}`,
             "A L Y A",
@@ -5935,7 +5945,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
               txt += `*${themeemoji}Url Source :* ${data.url}\n\n`;
               txt += `*${botname}*`;
               buf = await getBuffer(data.thumbnail);
-              XeonBotInc.sendMessage(
+              conn.sendMessage(
                 m.chat,
                 {
                   image: { url: data.thumbnail },
@@ -5944,7 +5954,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
                 },
                 { quoted: m }
               ).catch((err) => reply(mess.error));
-              XeonBotInc.sendMessage(
+              conn.sendMessage(
                 m.chat,
                 {
                   audio: { url: data.medias[0].url },
@@ -5971,7 +5981,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           var wifegerak = ano.split("\n");
           var wifegerakx =
             wifegerak[Math.floor(Math.random() * wifegerak.length)];
-          encmedia = await XeonBotInc.sendImageAsSticker(from, wifegerakx, m, {
+          encmedia = await conn.sendImageAsSticker(from, wifegerakx, m, {
             packname: global.packname,
             author: global.author,
           });
@@ -5989,7 +5999,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           var wifegerak = ano.split("\n");
           var wifegerakx =
             wifegerak[Math.floor(Math.random() * wifegerak.length)];
-          encmedia = await XeonBotInc.sendImageAsSticker(from, wifegerakx, m, {
+          encmedia = await conn.sendImageAsSticker(from, wifegerakx, m, {
             packname: global.packname,
             author: global.author,
           });
@@ -6007,7 +6017,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           var wifegerak = ano.split("\n");
           var wifegerakx =
             wifegerak[Math.floor(Math.random() * wifegerak.length)];
-          encmedia = await XeonBotInc.sendImageAsSticker(from, wifegerakx, m, {
+          encmedia = await conn.sendImageAsSticker(from, wifegerakx, m, {
             packname: global.packname,
             author: global.author,
           });
@@ -6023,7 +6033,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           if (isBanChat) return reply(mess.banChat);
           if (/image/.test(mime)) {
             let media = await quoted.download();
-            let encmedia = await XeonBotInc.sendImageAsSticker(
+            let encmedia = await conn.sendImageAsSticker(
               m.chat,
               media,
               m,
@@ -6034,7 +6044,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             if ((quoted.msg || quoted).seconds > 11)
               return reply("Maximum 10 seconds!");
             let media = await quoted.download();
-            let encmedia = await XeonBotInc.sendVideoAsSticker(
+            let encmedia = await conn.sendVideoAsSticker(
               m.chat,
               media,
               m,
@@ -6062,15 +6072,15 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           const pcknm = swn.split("|")[0];
           const atnm = swn.split("|")[1];
           if (m.quoted.isAnimated === true) {
-            XeonBotInc.downloadAndSaveMediaMessage(quoted, "gifee");
-            XeonBotInc.sendMessage(
+            conn.downloadAndSaveMediaMessage(quoted, "gifee");
+            conn.sendMessage(
               from,
               { sticker: fs.readFileSync("gifee.webp") },
               { quoted: m }
             );
           } else if (/image/.test(mime)) {
             let media = await quoted.download();
-            let encmedia = await XeonBotInc.sendImageAsSticker(
+            let encmedia = await conn.sendImageAsSticker(
               m.chat,
               media,
               m,
@@ -6081,7 +6091,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             if ((quoted.msg || quoted).seconds > 11)
               return reply("Maximum 10 seconds!");
             let media = await quoted.download();
-            let encmedia = await XeonBotInc.sendVideoAsSticker(
+            let encmedia = await conn.sendVideoAsSticker(
               m.chat,
               media,
               m,
@@ -6117,10 +6127,10 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
               `Send/Reply Photo With Caption ${prefix + command} *text*`
             );
           reply(mess.wait);
-          mee = await XeonBotInc.downloadAndSaveMediaMessage(quoted);
+          mee = await conn.downloadAndSaveMediaMessage(quoted);
           mem = await TelegraPh(mee);
           meme = `https://api.memegen.link/images/custom/-/${text}.png?background=${mem}`;
-          memek = await XeonBotInc.sendImageAsSticker(m.chat, meme, m, {
+          memek = await conn.sendImageAsSticker(m.chat, meme, m, {
             packname: global.packname,
             author: global.author,
           });
@@ -6164,7 +6174,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
         if (isBanChat) return reply(mess.banChat);
         teks = `Here you go!`;
         buffer = `https://api.dapuhy.xyz/api/randomimage/batues?apikey=0gly81wDky`;
-        XeonBotInc.sendMessage(
+        conn.sendMessage(
           from,
           { image: { url: buffer }, caption: "Here you go!" },
           { quoted: m }
@@ -6183,7 +6193,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             `https://myselfff.herokuapp.com/docs/wallpaper/${command}`
           );
           nyz3 = await getBuffer(nyz2.list.gambar);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: nyz3, caption: `By ${global.botname}` },
             { quoted: m }
@@ -6219,7 +6229,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: wbuttsss,
           headerType: 4,
         };
-        await XeonBotInc.sendMessage(m.chat, buttonssMessages, {
+        await conn.sendMessage(m.chat, buttonssMessages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -6255,7 +6265,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             `https://myselfff.herokuapp.com/docs/nsfw/${command}`
           );
           YesHorny = await getBuffer(NoHorny.result);
-          XeonBotInc.sendMessage(from, { image: YesHorny }, { quoted: m });
+          conn.sendMessage(from, { image: YesHorny }, { quoted: m });
         } catch (e) {
           error("Error");
         }
@@ -6269,7 +6279,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
         spankd = await axios.get(`https://nekos.life/api/v2/img/spank`);
         let spbuff = await getBuffer(spankd.data.url);
         let spgif = await GIFBufferToVideoBuffer(spbuff);
-        await XeonBotInc.sendMessage(
+        await conn.sendMessage(
           m.chat,
           { video: spgif, gifPlayback: true },
           { quoted: m }
@@ -6287,7 +6297,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
         bjd = await axios.get(`https://api.waifu.pics/nsfw/blowjob`);
         let bjf = await getBuffer(bjd.data.url);
         let bjif = await GIFBufferToVideoBuffer(bjf);
-        await XeonBotInc.sendMessage(
+        await conn.sendMessage(
           m.chat,
           { video: bjif, gifPlayback: true },
           { quoted: m }
@@ -6305,7 +6315,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           reply(mess.wait);
           anu = await hentai();
           result912 = anu[Math.floor(Math.random(), anu.length)];
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             m.chat,
             {
               video: { url: result912.video_1 },
@@ -6331,7 +6341,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: trapbot,
           headerType: 1,
         };
-        await XeonBotInc.sendMessage(m.chat, button2Messages, {
+        await conn.sendMessage(m.chat, button2Messages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -6357,7 +6367,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: hnekobot,
           headerType: 1,
         };
-        await XeonBotInc.sendMessage(m.chat, button3Messages, {
+        await conn.sendMessage(m.chat, button3Messages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -6384,7 +6394,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: nwaifubot,
           headerType: 1,
         };
-        await XeonBotInc.sendMessage(m.chat, button4Messages, {
+        await conn.sendMessage(m.chat, button4Messages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -6410,7 +6420,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: wbuttsss,
           headerType: 4,
         };
-        await XeonBotInc.sendMessage(m.chat, buttonsssMessages, {
+        await conn.sendMessage(m.chat, buttonsssMessages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -6435,7 +6445,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: wbuttsss,
           headerType: 4,
         };
-        await XeonBotInc.sendMessage(m.chat, button1ssMessages, {
+        await conn.sendMessage(m.chat, button1ssMessages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -6460,7 +6470,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: wbuttsss,
           headerType: 4,
         };
-        await XeonBotInc.sendMessage(m.chat, button12ssMessages, {
+        await conn.sendMessage(m.chat, button12ssMessages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -6480,7 +6490,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: xxhnekobot,
           headerType: 1,
         };
-        await XeonBotInc.sendMessage(m.chat, xx1button3Messages, {
+        await conn.sendMessage(m.chat, xx1button3Messages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -6505,7 +6515,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: wbuttsss,
           headerType: 4,
         };
-        await XeonBotInc.sendMessage(m.chat, button112ssMessages, {
+        await conn.sendMessage(m.chat, button112ssMessages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -6530,7 +6540,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: wbutsss,
           headerType: 4,
         };
-        await XeonBotInc.sendMessage(m.chat, buttonssMessage, {
+        await conn.sendMessage(m.chat, buttonssMessage, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -6555,7 +6565,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: wbuttsss,
           headerType: 4,
         };
-        await XeonBotInc.sendMessage(m.chat, buttonsosMessages, {
+        await conn.sendMessage(m.chat, buttonsosMessages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -6580,7 +6590,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: wbuttsss,
           headerType: 4,
         };
-        await XeonBotInc.sendMessage(m.chat, btutttonssMessages, {
+        await conn.sendMessage(m.chat, btutttonssMessages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -6605,7 +6615,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: wbuttsss,
           headerType: 4,
         };
-        await XeonBotInc.sendMessage(m.chat, xxbuttonssMessages, {
+        await conn.sendMessage(m.chat, xxbuttonssMessages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -6630,7 +6640,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: wbuttsss,
           headerType: 4,
         };
-        await XeonBotInc.sendMessage(m.chat, buttonsTsMessages, {
+        await conn.sendMessage(m.chat, buttonsTsMessages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -6655,7 +6665,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: wbuttsss,
           headerType: 4,
         };
-        await XeonBotInc.sendMessage(m.chat, buttonussMessages, {
+        await conn.sendMessage(m.chat, buttonussMessages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -6680,7 +6690,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: wbuttsss,
           headerType: 4,
         };
-        await XeonBotInc.sendMessage(m.chat, bxxuttonssMessages, {
+        await conn.sendMessage(m.chat, bxxuttonssMessages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -6705,7 +6715,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: wbuttsss,
           headerType: 4,
         };
-        await XeonBotInc.sendMessage(m.chat, buttoxnssMessages, {
+        await conn.sendMessage(m.chat, buttoxnssMessages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -6730,7 +6740,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: wbuttsss,
           headerType: 4,
         };
-        await XeonBotInc.sendMessage(m.chat, buttonssxMessages, {
+        await conn.sendMessage(m.chat, buttonssxMessages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -6755,7 +6765,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: wbutt1sss,
           headerType: 4,
         };
-        await XeonBotInc.sendMessage(m.chat, button1ssxMessages, {
+        await conn.sendMessage(m.chat, button1ssxMessages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -6780,7 +6790,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: wbuttszzss,
           headerType: 4,
         };
-        await XeonBotInc.sendMessage(m.chat, buttonszzsxMessages, {
+        await conn.sendMessage(m.chat, buttonszzsxMessages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -6805,7 +6815,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: wbuttszz12ss,
           headerType: 4,
         };
-        await XeonBotInc.sendMessage(m.chat, buttonszzsx12Messages, {
+        await conn.sendMessage(m.chat, buttonszzsx12Messages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -6830,7 +6840,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: wbuttszz123ss,
           headerType: 4,
         };
-        await XeonBotInc.sendMessage(m.chat, buttonszzsx123Messages, {
+        await conn.sendMessage(m.chat, buttonszzsx123Messages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -6855,7 +6865,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: wbuttszz124ss,
           headerType: 4,
         };
-        await XeonBotInc.sendMessage(m.chat, buttonszzsx124Messages, {
+        await conn.sendMessage(m.chat, buttonszzsx124Messages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -6880,7 +6890,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: wbuttszz125ss,
           headerType: 4,
         };
-        await XeonBotInc.sendMessage(m.chat, buttonszzsx125Messages, {
+        await conn.sendMessage(m.chat, buttonszzsx125Messages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -6905,7 +6915,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: wbuttszz126ss,
           headerType: 4,
         };
-        await XeonBotInc.sendMessage(m.chat, buttonszzsx126Messages, {
+        await conn.sendMessage(m.chat, buttonszzsx126Messages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -6930,7 +6940,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: wbuttszz127ss,
           headerType: 4,
         };
-        await XeonBotInc.sendMessage(m.chat, buttonszzsx127Messages, {
+        await conn.sendMessage(m.chat, buttonszzsx127Messages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -6955,7 +6965,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: wbuttszz128ss,
           headerType: 4,
         };
-        await XeonBotInc.sendMessage(m.chat, buttonszzsx128Messages, {
+        await conn.sendMessage(m.chat, buttonszzsx128Messages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -6980,7 +6990,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: wbuttszz129ss,
           headerType: 4,
         };
-        await XeonBotInc.sendMessage(m.chat, buttonszzsx129Messages, {
+        await conn.sendMessage(m.chat, buttonszzsx129Messages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -7005,7 +7015,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: wbuttszz1210ss,
           headerType: 4,
         };
-        await XeonBotInc.sendMessage(m.chat, buttonszzsx1210Messages, {
+        await conn.sendMessage(m.chat, buttonszzsx1210Messages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -7030,7 +7040,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: wbuttszz1211ss,
           headerType: 4,
         };
-        await XeonBotInc.sendMessage(m.chat, buttonszzsx1211Messages, {
+        await conn.sendMessage(m.chat, buttonszzsx1211Messages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -7055,7 +7065,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: wbuttszz1212ss,
           headerType: 4,
         };
-        await XeonBotInc.sendMessage(m.chat, buttonszzsx1212Messages, {
+        await conn.sendMessage(m.chat, buttonszzsx1212Messages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -7080,7 +7090,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: wbuttszz1213ss,
           headerType: 4,
         };
-        await XeonBotInc.sendMessage(m.chat, buttonszzsx1213Messages, {
+        await conn.sendMessage(m.chat, buttonszzsx1213Messages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -7105,7 +7115,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: wbuttszz1214ss,
           headerType: 4,
         };
-        await XeonBotInc.sendMessage(m.chat, buttonszzsx1214Messages, {
+        await conn.sendMessage(m.chat, buttonszzsx1214Messages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -7130,7 +7140,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: wbuttszz1215ss,
           headerType: 4,
         };
-        await XeonBotInc.sendMessage(m.chat, buttonszzsx1215Messages, {
+        await conn.sendMessage(m.chat, buttonszzsx1215Messages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -7155,7 +7165,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: wbuttszz1216ss,
           headerType: 4,
         };
-        await XeonBotInc.sendMessage(m.chat, buttonszzsx1216Messages, {
+        await conn.sendMessage(m.chat, buttonszzsx1216Messages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -7180,7 +7190,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: wbuttszz1217ss,
           headerType: 4,
         };
-        await XeonBotInc.sendMessage(m.chat, buttonszzsx1217Messages, {
+        await conn.sendMessage(m.chat, buttonszzsx1217Messages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -7205,7 +7215,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: wbuttszz1218ss,
           headerType: 4,
         };
-        await XeonBotInc.sendMessage(m.chat, buttonszzsx1218Messages, {
+        await conn.sendMessage(m.chat, buttonszzsx1218Messages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -7230,7 +7240,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: wbuttszz1219ss,
           headerType: 4,
         };
-        await XeonBotInc.sendMessage(m.chat, buttonszzsx1219Messages, {
+        await conn.sendMessage(m.chat, buttonszzsx1219Messages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -7255,7 +7265,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: wbuttszz1220ss,
           headerType: 4,
         };
-        await XeonBotInc.sendMessage(m.chat, buttonszzsx1220Messages, {
+        await conn.sendMessage(m.chat, buttonszzsx1220Messages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -7280,7 +7290,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: wbutsss,
           headerType: 4,
         };
-        await XeonBotInc.sendMessage(m.chat, buttonsesMessage, {
+        await conn.sendMessage(m.chat, buttonsesMessage, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -7305,7 +7315,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: wbutsss,
           headerType: 4,
         };
-        await XeonBotInc.sendMessage(m.chat, buttonzMessage, {
+        await conn.sendMessage(m.chat, buttonzMessage, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -7330,7 +7340,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: wbuttsss,
           headerType: 2,
         };
-        await XeonBotInc.sendMessage(m.chat, button1Messages, {
+        await conn.sendMessage(m.chat, button1Messages, {
           quoted: m,
         }).catch((err) => {
           return "Error!";
@@ -7364,7 +7374,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           buttons: walb,
           headerType: 4,
         };
-        await XeonBotInc.sendMessage(m.chat, wal, { quoted: m }).catch(
+        await conn.sendMessage(m.chat, wal, { quoted: m }).catch(
           (err) => {
             return "Error!";
           }
@@ -7403,7 +7413,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
         if (isBan) return reply(mess.ban);
         if (isBanChat) return reply(mess.banChat);
         axios.get(`https://api.waifu.pics/sfw/${command}`).then(({ data }) => {
-          XeonBotInc.sendImageAsSticker(m.chat, data.url, m, {
+          conn.sendImageAsSticker(m.chat, data.url, m, {
             packname: global.packname,
             author: global.author,
           });
@@ -7415,7 +7425,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
         if (isBanChat) return reply(mess.banChat);
         reply(mess.wait);
         axios.get(`https://api.waifu.pics/sfw/waifu`).then(({ data }) => {
-          XeonBotInc.sendImage(m.chat, data.url, mess.success, m);
+          conn.sendImage(m.chat, data.url, mess.success, m);
         });
         break;
       case "naruto":
@@ -7437,7 +7447,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             type: 1,
           },
         ];
-        XeonBotInc.sendMessage(
+        conn.sendMessage(
           from,
           {
             caption: `Here you go!`,
@@ -7461,7 +7471,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             type: 1,
           },
         ];
-        XeonBotInc.sendMessage(
+        conn.sendMessage(
           from,
           {
             caption: "Here you go!",
@@ -7491,7 +7501,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             buttons: buttons,
             headerType: 4,
           };
-          XeonBotInc.sendMessage(m.chat, buttonMessage, { quoted: m });
+          conn.sendMessage(m.chat, buttonMessage, { quoted: m });
         }
         break;
       case "zippyshare":
@@ -7506,7 +7516,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           );
           m.reply(`*${util.format(anu)}*`);
           linkyke = await getBuffer(anu.result.dlink);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             m.chat,
             {
               document: linkyke,
@@ -7547,7 +7557,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
                 };
                 sections.push(list);
               }
-              const sendm = XeonBotInc.sendMessage(
+              const sendm = conn.sendMessage(
                 m.chat,
                 {
                   text: `${data.meta.title} *Here is the list of videos, click the button below to choose*`,
@@ -7584,12 +7594,12 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             webp2mp4File,
             TelegraPh,
           } = require("./lib/uploader2");
-          let media = await XeonBotInc.downloadAndSaveMediaMessage(quoted);
+          let media = await conn.downloadAndSaveMediaMessage(quoted);
           let anu = await TelegraPh(media);
           let buf = await getBuffer(
             `https://cililitan.herokuapp.com/api/${command}?url=${anu}`
           );
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             m.chat,
             { image: buf, caption: `Made by ${botname}` },
             { quoted: m }
@@ -7607,12 +7617,12 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             webp2mp4File,
             TelegraPh,
           } = require("./lib/uploader2");
-          let media = await XeonBotInc.downloadAndSaveMediaMessage(quoted);
+          let media = await conn.downloadAndSaveMediaMessage(quoted);
           let anu = await TelegraPh(media);
           let buf = await getBuffer(
             `https://cililitan.herokuapp.com/api/gay?url=${anu}`
           );
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             m.chat,
             { image: buf, caption: `Made by ${botname}` },
             { quoted: m }
@@ -7630,12 +7640,12 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             webp2mp4File,
             TelegraPh,
           } = require("./lib/uploader2");
-          let media = await XeonBotInc.downloadAndSaveMediaMessage(quoted);
+          let media = await conn.downloadAndSaveMediaMessage(quoted);
           let anu = await TelegraPh(media);
           let buf = await getBuffer(
             `https://cililitan.herokuapp.com/api/delete?url=${anu}`
           );
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             m.chat,
             { image: buf, caption: `Made by ${botname}` },
             { quoted: m }
@@ -7653,12 +7663,12 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             webp2mp4File,
             TelegraPh,
           } = require("./lib/uploader2");
-          let media = await XeonBotInc.downloadAndSaveMediaMessage(quoted);
+          let media = await conn.downloadAndSaveMediaMessage(quoted);
           let anu = await TelegraPh(media);
           let buf = await getBuffer(
             `https://cililitan.herokuapp.com/api/fotojatoh?url=${anu}`
           );
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             m.chat,
             { image: buf, caption: `Made by ${botname}` },
             { quoted: m }
@@ -7676,12 +7686,12 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             webp2mp4File,
             TelegraPh,
           } = require("./lib/uploader2");
-          let media = await XeonBotInc.downloadAndSaveMediaMessage(quoted);
+          let media = await conn.downloadAndSaveMediaMessage(quoted);
           let anu = await TelegraPh(media);
           let buf = await getBuffer(
             `https://cililitan.herokuapp.com/api/beautiful?url=${anu}`
           );
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             m.chat,
             { image: buf, caption: `Made by ${botname}` },
             { quoted: m }
@@ -7706,15 +7716,15 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           if (isBanChat) return reply(mess.banChat);
           if (!quoted) return reply(`Reply image`);
           if (/image/.test(mime)) {
-            anu = await XeonBotInc.downloadAndSaveMediaMessage(quoted);
-            XeonBotInc.sendMessage(
+            anu = await conn.downloadAndSaveMediaMessage(quoted);
+            conn.sendMessage(
               m.chat,
               { image: { url: anu }, viewOnce: true },
               { quoted: m }
             );
           } else if (/video/.test(mime)) {
-            anu = await XeonBotInc.downloadAndSaveMediaMessage(quoted);
-            XeonBotInc.sendMessage(
+            anu = await conn.downloadAndSaveMediaMessage(quoted);
+            conn.sendMessage(
               m.chat,
               { video: { url: anu }, viewOnce: true },
               { quoted: m }
@@ -7949,7 +7959,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
         xeony_buffer = await getBuffer(
           `https://github.com/DGXeon/Tiktokmusic-API/raw/master/tiktokmusic/${command}.mp3`
         );
-        await XeonBotInc.sendMessage(
+        await conn.sendMessage(
           m.chat,
           { audio: xeony_buffer, mimetype: "audio/mp4", ptt: true },
           { quoted: m }
@@ -7968,7 +7978,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             [`${teks1}`, `${teks2}`]
           )
           .then((data) =>
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               m.chat,
               { image: { url: data }, caption: `Made by ${global.botname}` },
               { quoted: m }
@@ -7987,7 +7997,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             `${q}`,
           ])
           .then((data) =>
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               m.chat,
               { image: { url: data }, caption: `Made by ${global.botname}` },
               { quoted: m }
@@ -8006,7 +8016,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             `${q}`,
           ])
           .then((data) =>
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               m.chat,
               { image: { url: data }, caption: `Made by ${global.botname}` },
               { quoted: m }
@@ -8026,7 +8036,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             [`${q}`]
           )
           .then((data) =>
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               m.chat,
               { image: { url: data }, caption: `Made by ${global.botname}` },
               { quoted: m }
@@ -8046,7 +8056,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             [`${q}`]
           )
           .then((data) =>
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               m.chat,
               { image: { url: data }, caption: `Made by ${global.botname}` },
               { quoted: m }
@@ -8066,7 +8076,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             [`${q}`]
           )
           .then((data) =>
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               m.chat,
               { image: { url: data }, caption: `Made by ${global.botname}` },
               { quoted: m }
@@ -8088,7 +8098,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             [`${teks1}`, `${teks2}`]
           )
           .then((data) =>
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               m.chat,
               { image: { url: data }, caption: `Made by ${global.botname}` },
               { quoted: m }
@@ -8108,7 +8118,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             [`${q}`]
           )
           .then((data) =>
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               m.chat,
               { image: { url: data }, caption: `Made by ${global.botname}` },
               { quoted: m }
@@ -8128,7 +8138,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             [`${q}`]
           )
           .then((data) =>
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               m.chat,
               { image: { url: data }, caption: `Made by ${global.botname}` },
               { quoted: m }
@@ -8148,7 +8158,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             [`${q}`]
           )
           .then((data) =>
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               m.chat,
               { image: { url: data }, caption: `Made by ${global.botname}` },
               { quoted: m }
@@ -8168,7 +8178,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             [`${q}`]
           )
           .then((data) =>
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               m.chat,
               { image: { url: data }, caption: `Made by ${global.botname}` },
               { quoted: m }
@@ -8188,7 +8198,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             [`${q}`]
           )
           .then((data) =>
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               m.chat,
               { image: { url: data }, caption: `Made by ${global.botname}` },
               { quoted: m }
@@ -8207,7 +8217,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             [`${q}`]
           )
           .then((data) =>
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               m.chat,
               { image: { url: data }, caption: `Made by ${global.botname}` },
               { quoted: m }
@@ -8230,7 +8240,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             [`${teks1}`, `${teks2}`]
           )
           .then((data) =>
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               m.chat,
               { image: { url: data }, caption: `Made by ${global.botname}` },
               { quoted: m }
@@ -8252,7 +8262,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             [`${teks1}`, `${teks2}`]
           )
           .then((data) =>
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               m.chat,
               { image: { url: data }, caption: `Made by ${global.botname}` },
               { quoted: m }
@@ -8272,7 +8282,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             [`${q}`]
           )
           .then((data) =>
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               m.chat,
               { image: { url: data }, caption: `Made by ${global.botname}` },
               { quoted: m }
@@ -8292,7 +8302,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             [`${q}`]
           )
           .then((data) =>
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               m.chat,
               { image: { url: data }, caption: `Made by ${global.botname}` },
               { quoted: m }
@@ -8314,7 +8324,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             [`${teks1}`, `${teks2}`]
           )
           .then((data) =>
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               m.chat,
               { image: { url: data }, caption: `Made by ${global.botname}` },
               { quoted: m }
@@ -8336,7 +8346,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             [`${teks1}`, `${teks2}`]
           )
           .then((data) =>
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               m.chat,
               { image: { url: data }, caption: `Made by ${global.botname}` },
               { quoted: m }
@@ -8358,7 +8368,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             [`${teks1}`, `${teks2}`]
           )
           .then((data) =>
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               m.chat,
               { image: { url: data }, caption: `Made by ${global.botname}` },
               { quoted: m }
@@ -8380,7 +8390,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             [`${teks1}`, `${teks2}`]
           )
           .then((data) =>
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               m.chat,
               { image: { url: data }, caption: `Made by ${global.botname}` },
               { quoted: m }
@@ -8400,7 +8410,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             [`${q}`]
           )
           .then((data) =>
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               m.chat,
               { image: { url: data }, caption: `Made by ${global.botname}` },
               { quoted: m }
@@ -8419,7 +8429,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             `${q}`,
           ])
           .then((data) =>
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               m.chat,
               { image: { url: data }, caption: `Made by ${global.botname}` },
               { quoted: m }
@@ -8438,7 +8448,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             `${q}`,
           ])
           .then((data) =>
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               m.chat,
               { image: { url: data }, caption: `Made by ${global.botname}` },
               { quoted: m }
@@ -8455,7 +8465,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
         maker
           .textpro("https://textpro.me/bokeh-text-effect-876.html", [`${q}`])
           .then((data) =>
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               m.chat,
               { image: { url: data }, caption: `Made by ${global.botname}` },
               { quoted: m }
@@ -8474,7 +8484,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             `${q}`,
           ])
           .then((data) =>
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               m.chat,
               { image: { url: data }, caption: `Made by ${global.botname}` },
               { quoted: m }
@@ -8496,7 +8506,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             [`${teks1}`, `${teks2}`]
           )
           .then((data) =>
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               m.chat,
               { image: { url: data }, caption: `Made by ${global.botname}` },
               { quoted: m }
@@ -8518,7 +8528,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             [`${teks1}`, `${teks2}`]
           )
           .then((data) =>
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               m.chat,
               { image: { url: data }, caption: `Made by ${global.botname}` },
               { quoted: m }
@@ -8537,7 +8547,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             `${q}`,
           ])
           .then((data) =>
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               m.chat,
               { image: { url: data }, caption: `Made by ${global.botname}` },
               { quoted: m }
@@ -8556,7 +8566,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             `${q}`,
           ])
           .then((data) =>
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               m.chat,
               { image: { url: data }, caption: `Made by ${global.botname}` },
               { quoted: m }
@@ -8576,7 +8586,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             [`${q}`]
           )
           .then((data) =>
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               m.chat,
               { image: { url: data }, caption: `Made by ${global.botname}` },
               { quoted: m }
@@ -8596,7 +8606,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             [`${q}`]
           )
           .then((data) =>
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               m.chat,
               { image: { url: data }, caption: `Made by ${global.botname}` },
               { quoted: m }
@@ -8615,7 +8625,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             `${q}`,
           ])
           .then((data) =>
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               m.chat,
               { image: { url: data }, caption: `Made by ${global.botname}` },
               { quoted: m }
@@ -8634,7 +8644,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             `${q}`,
           ])
           .then((data) =>
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               m.chat,
               { image: { url: data }, caption: `Made by ${global.botname}` },
               { quoted: m }
@@ -8651,7 +8661,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
         maker
           .textpro("https://textpro.me/carbon-text-effect-833.html", [`${q}`])
           .then((data) =>
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               m.chat,
               { image: { url: data }, caption: `Made by ${global.botname}` },
               { quoted: m }
@@ -8671,7 +8681,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             [`${q}`]
           )
           .then((data) =>
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               m.chat,
               { image: { url: data }, caption: `Made by ${global.botname}` },
               { quoted: m }
@@ -8899,7 +8909,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           if (/leaves/.test(command))
             link = "https://textpro.me/natural-leaves-text-effect-931.html";
           let anu = await maker.textpro(link, q);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             m.chat,
             { image: { url: anu }, caption: `Made by ${global.botname}` },
             { quoted: m }
@@ -8924,7 +8934,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
               "https://textpro.me/create-impressive-glitch-text-effects-online-1027.html",
               [args[1]]
             );
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               from,
               { image: { url: teds }, caption: "Done!" },
               { quoted: m }
@@ -8940,7 +8950,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
               "https://textpro.me/create-light-glow-sliced-text-effect-online-1068.html",
               [args[1]]
             );
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               from,
               { image: { url: teds }, caption: "Done!" },
               { quoted: m }
@@ -8959,7 +8969,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -8974,7 +8984,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -8989,7 +8999,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -9004,7 +9014,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -9019,7 +9029,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -9034,7 +9044,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -9049,7 +9059,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -9065,7 +9075,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -9080,7 +9090,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -9095,7 +9105,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -9110,7 +9120,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -9125,7 +9135,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -9140,7 +9150,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -9155,7 +9165,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -9170,7 +9180,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -9185,7 +9195,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -9200,7 +9210,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -9215,7 +9225,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -9230,7 +9240,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -9245,7 +9255,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -9260,7 +9270,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -9275,7 +9285,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -9290,7 +9300,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -9305,7 +9315,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -9320,7 +9330,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -9335,7 +9345,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -9350,7 +9360,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -9365,7 +9375,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -9380,7 +9390,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -9395,7 +9405,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -9410,7 +9420,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -9425,7 +9435,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -9440,7 +9450,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -9455,7 +9465,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -9470,7 +9480,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -9485,7 +9495,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -9500,7 +9510,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -9515,7 +9525,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -9530,7 +9540,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -9545,7 +9555,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let anui = await textpro(link, q);
           reply(`Wait a moment while making the logo about 1 minute`);
           console.log(anui);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anui }, caption: "Here you go!" },
             { quoted: m }
@@ -9567,7 +9577,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             [`${logo4}`, `${logo9}`]
           );
           console.log(anu);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anu }, caption: "Here you go!" },
             { quoted: m }
@@ -9589,7 +9599,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             [`${logo4}`, `${logo9}`]
           );
           console.log(anu);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anu }, caption: "Here you go!" },
             { quoted: m }
@@ -9611,7 +9621,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             [`${logo4}`, `${logo9}`]
           );
           console.log(anu);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anu }, caption: "Here you go!" },
             { quoted: m }
@@ -9633,7 +9643,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             [`${logo4}`, `${logo9}`]
           );
           console.log(anu);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: anu }, caption: "Here you go!" },
             { quoted: m }
@@ -9646,7 +9656,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           if (isBanChat) return reply(mess.banChat);
           if (!args.join(" ")) return reply("Where is the emoji?");
           emoji.get(args.join(" ")).then(async (emoji) => {
-            let mese = await XeonBotInc.sendMessage(
+            let mese = await conn.sendMessage(
               m.chat,
               {
                 image: { url: emoji.images[4].url },
@@ -9654,7 +9664,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
               },
               { quoted: m }
             );
-            await XeonBotInc.sendMessage(
+            await conn.sendMessage(
               from,
               { text: "reply #s to this image to make sticker" },
               { quoted: mese }
@@ -9797,7 +9807,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             )}_${encodeURIComponent(emoji2)}`
           );
           for (let res of kuntuh.results) {
-            let encmedia = await XeonBotInc.sendImageAsSticker(
+            let encmedia = await conn.sendImageAsSticker(
               from,
               res.url,
               m,
@@ -9820,13 +9830,13 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           if (!/webp/.test(mime))
             return reply(`Reply sticker with caption *${prefix + command}*`);
           reply(mess.wait);
-          let media = await XeonBotInc.downloadAndSaveMediaMessage(quoted);
+          let media = await conn.downloadAndSaveMediaMessage(quoted);
           let ran = await getRandom(".png");
           exec(`ffmpeg -i ${media} ${ran}`, (err) => {
             fs.unlinkSync(media);
             if (err) throw err;
             let buffer = fs.readFileSync(ran);
-            XeonBotInc.sendMessage(m.chat, { image: buffer }, { quoted: m });
+            conn.sendMessage(m.chat, { image: buffer }, { quoted: m });
             fs.unlinkSync(ran);
           });
         }
@@ -9841,9 +9851,9 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             return reply(`Reply sticker with caption *${prefix + command}*`);
           reply(mess.wait);
           let { webp2mp4File } = require("./lib/uploader");
-          let media = await XeonBotInc.downloadAndSaveMediaMessage(quoted);
+          let media = await conn.downloadAndSaveMediaMessage(quoted);
           let webpToMp4 = await webp2mp4File(media);
-          await XeonBotInc.sendMessage(
+          await conn.sendMessage(
             m.chat,
             {
               video: {
@@ -9877,7 +9887,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let media = await quoted.download();
           let { toAudio } = require("./lib/converter");
           let audio = await toAudio(media, "mp4");
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             m.chat,
             { audio: audio, mimetype: "audio/mpeg" },
             { quoted: m }
@@ -9910,12 +9920,12 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let media = await quoted.download();
           let { toAudio } = require("./lib/converter");
           let audio = await toAudio(media, "mp4");
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             m.chat,
             {
               document: audio,
               mimetype: "audio/mpeg",
-              fileName: `Converted By ${XeonBotInc.user.name} (${m.id}).mp3`,
+              fileName: `Converted By ${conn.user.name} (${m.id}).mp3`,
             },
             { quoted: m }
           );
@@ -9942,7 +9952,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           let media = await quoted.download();
           let { toPTT } = require("./lib/converter");
           let audio = await toPTT(media, "mp4");
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             m.chat,
             { audio: audio, mimetype: "audio/mpeg", ptt: true },
             { quoted: m }
@@ -9958,9 +9968,9 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             return reply(`Reply sticker with caption *${prefix + command}*`);
           reply(mess.wait);
           let { webp2mp4File } = require("./lib/uploader");
-          let media = await XeonBotInc.downloadAndSaveMediaMessage(quoted);
+          let media = await conn.downloadAndSaveMediaMessage(quoted);
           let webpToMp4 = await webp2mp4File(media);
-          await XeonBotInc.sendMessage(
+          await conn.sendMessage(
             m.chat,
             {
               video: {
@@ -9984,7 +9994,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
             webp2mp4File,
             TelegraPh,
           } = require("./lib/uploader");
-          let media = await XeonBotInc.downloadAndSaveMediaMessage(quoted);
+          let media = await conn.downloadAndSaveMediaMessage(quoted);
           if (/image/.test(mime)) {
             let anu = await TelegraPh(media);
             reply(util.format(anu));
@@ -10019,7 +10029,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
           ];
           let apinobg = apirnobg[Math.floor(Math.random() * apirnobg.length)];
           hmm = (await "./src/remobg-") + getRandom("");
-          localFile = await XeonBotInc.downloadAndSaveMediaMessage(quoted, hmm);
+          localFile = await conn.downloadAndSaveMediaMessage(quoted, hmm);
           outputFile = (await "./src/hremo-") + getRandom(".png");
           reply(mess.wait);
           remobg
@@ -10032,7 +10042,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
               outputFile,
             })
             .then(async (result) => {
-              XeonBotInc.sendMessage(
+              conn.sendMessage(
                 m.chat,
                 { image: fs.readFileSync(outputFile), caption: mess.success },
                 { quoted: m }
@@ -10067,7 +10077,7 @@ ${vote[m.chat][2].map((v, i) => `┃╠ ${i + 1}. @${v.split`@`[0]}`).join("\n")
               global.themeemoji
             } Url : ${i.url}\n\n─────────────────\n\n`;
           }
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             m.chat,
             { image: { url: search.all[0].thumbnail }, caption: teks },
             { quoted: m }
@@ -10133,7 +10143,7 @@ ${global.themeemoji} Media Url : ${images}`,
                 },
               },
             };
-            XeonBotInc.sendMessage(m.chat, buttonMessage, { quoted: m });
+            conn.sendMessage(m.chat, buttonMessage, { quoted: m });
           });
         }
         break;
@@ -10178,7 +10188,7 @@ ${global.themeemoji} Media Url : ${images}`,
                 buttons: buttons,
                 headerType: 4,
               };
-              XeonBotInc.sendMessage(from, buttonMessage, { quoted: m });
+              conn.sendMessage(from, buttonMessage, { quoted: m });
             });
           } catch (err) {
             reply(String(err));
@@ -10199,7 +10209,7 @@ ${global.themeemoji} Media Url : ${images}`,
           hx.igstory(urlnya)
             .then(async (result) => {
               var halo = 0;
-              XeonBotInc.sendMessage(
+              conn.sendMessage(
                 m.chat,
                 {
                   image: { url: result.user.profilePicUrl },
@@ -10211,7 +10221,7 @@ ${global.themeemoji} Media Url : ${images}`,
               for (let i of result.medias) {
                 if (i.url.includes("mp4")) {
                   let link = await getBuffer(i.url);
-                  XeonBotInc.sendMessage(
+                  conn.sendMessage(
                     m.chat,
                     {
                       video: link,
@@ -10222,7 +10232,7 @@ ${global.themeemoji} Media Url : ${images}`,
                   );
                 } else {
                   let link = await getBuffer(i.url);
-                  XeonBotInc.sendMessage(
+                  conn.sendMessage(
                     m.chat,
                     {
                       image: link,
@@ -10254,7 +10264,7 @@ ${global.themeemoji} Media Url : ${images}`,
           hx.igdl(urlnya)
             .then(async (result) => {
               var halo = 0;
-              XeonBotInc.sendMessage(
+              conn.sendMessage(
                 m.chat,
                 {
                   image: { url: result.user.profilePicUrl },
@@ -10266,7 +10276,7 @@ ${global.themeemoji} Media Url : ${images}`,
               for (let i of result.medias) {
                 if (i.url.includes("mp4")) {
                   let link = await getBuffer(i.url);
-                  XeonBotInc.sendMessage(
+                  conn.sendMessage(
                     m.chat,
                     {
                       video: link,
@@ -10277,7 +10287,7 @@ ${global.themeemoji} Media Url : ${images}`,
                   );
                 } else {
                   let link = await getBuffer(i.url);
-                  XeonBotInc.sendMessage(
+                  conn.sendMessage(
                     m.chat,
                     {
                       image: link,
@@ -10339,7 +10349,7 @@ ${global.themeemoji} Media Url : ${images}`,
                 buttons: buttons,
                 headerType: 4,
               };
-              XeonBotInc.sendMessage(from, buttonMessage, { quoted: m });
+              conn.sendMessage(from, buttonMessage, { quoted: m });
             });
           } catch (err) {
             reply(String(err));
@@ -10351,7 +10361,7 @@ ${global.themeemoji} Media Url : ${images}`,
           if (isBan) return reply(mess.ban);
           if (isBanChat) return reply(mess.banChat);
           if (args[0] === "mp4") {
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               from,
               {
                 video: { url: args[1] },
@@ -10361,7 +10371,7 @@ ${global.themeemoji} Media Url : ${images}`,
               { quoted: m }
             );
           } else if (args[0] === "jpg") {
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               from,
               { image: { url: args[1] }, caption: "Done!" },
               { quoted: m }
@@ -10377,7 +10387,7 @@ ${global.themeemoji} Media Url : ${images}`,
           if (isBanChat) return reply(mess.banChat);
           if (!args[0]) return reply(`Where's the link ?`);
           try {
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               from,
               {
                 video: { url: args[0] },
@@ -10406,7 +10416,7 @@ ${global.themeemoji} Media Url : ${images}`,
           if (isBanChat) return reply(mess.banChat);
           if (!args[0]) return reply(`Where's the link?`);
           try {
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               from,
               {
                 image: { url: args[0] },
@@ -10444,7 +10454,7 @@ ${global.themeemoji} Media Url : ${images}`,
           instagramdlv3(`${text}`)
             .then(async (data) => {
               var buf = await getBuffer(data[0].thumbnail);
-              XeonBotInc.sendMessage(
+              conn.sendMessage(
                 m.chat,
                 {
                   video: { url: data[0].url },
@@ -10480,7 +10490,7 @@ ${global.themeemoji} Media Url : ${images}`,
               txt += `*${themeemoji}URL :* ${data.url}\n\n`;
               txt += `*${botname}*`;
               buf = await getBuffer(data.thumbnail);
-              XeonBotInc.sendMessage(
+              conn.sendMessage(
                 m.chat,
                 {
                   image: { url: data.thumbnail },
@@ -10490,7 +10500,7 @@ ${global.themeemoji} Media Url : ${images}`,
                 { quoted: m }
               );
               for (let i of data.medias) {
-                XeonBotInc.sendMessage(
+                conn.sendMessage(
                   m.chat,
                   {
                     video: { url: i.url },
@@ -10517,7 +10527,7 @@ ${global.themeemoji} Media Url : ${images}`,
           xeonkey
             .Twitter(`${text}`)
             .then(async (data) => {
-              XeonBotInc.sendMessage(
+              conn.sendMessage(
                 m.chat,
                 { audio: { url: data.medias[1].url }, mimetype: "audio/mp4" },
                 { quoted: m }
@@ -10583,7 +10593,7 @@ _Choose the video quality below by clicking the button_`;
                 },
               },
             };
-            XeonBotInc.sendMessage(from, buttonMessage, { quoted: m });
+            conn.sendMessage(from, buttonMessage, { quoted: m });
           } catch {
             reply("Error link!");
           }
@@ -10617,7 +10627,7 @@ _Choose the video quality below by clicking the button_`;
               },
             },
           };
-          XeonBotInc.sendMessage(from, buttonMessage, { quoted: m });
+          conn.sendMessage(from, buttonMessage, { quoted: m });
         }
         break;
       case "fbdl":
@@ -10644,7 +10654,7 @@ _Choose the video quality below by clicking the button_`;
               txt += `*${themeemoji}ID :* ${watermark}\n`;
               txt += `*${themeemoji}URL :* ${text}\n\n`;
               buf = await getBuffer(data.thumbnail);
-              XeonBotInc.sendMessage(
+              conn.sendMessage(
                 m.chat,
                 {
                   image: { url: data.thumbnail },
@@ -10654,7 +10664,7 @@ _Choose the video quality below by clicking the button_`;
                 { quoted: m }
               );
               for (let i of data.result) {
-                XeonBotInc.sendMessage(
+                conn.sendMessage(
                   m.chat,
                   {
                     video: { url: i.url },
@@ -10688,7 +10698,7 @@ _Choose the video quality below by clicking the button_`;
           noh
             .savefrom(`${text}`)
             .then(async (anu) => {
-              XeonBotInc.sendMessage(
+              conn.sendMessage(
                 m.chat,
                 { audio: { url: anu.url[0].url }, mimetype: "audio/mp4" },
                 { quoted: m }
@@ -10743,7 +10753,7 @@ _For HD quality you can click the button below_`;
                 },
               },
             };
-            XeonBotInc.sendMessage(from, buttonMessage, { quoted: m });
+            conn.sendMessage(from, buttonMessage, { quoted: m });
           } catch {
             reply("Link invalid!");
           }
@@ -10777,7 +10787,7 @@ _For HD quality you can click the button below_`;
               },
             },
           };
-          XeonBotInc.sendMessage(from, buttonMessage, { quoted: m });
+          conn.sendMessage(from, buttonMessage, { quoted: m });
         }
         break;
       case "pinterest2":
@@ -10788,7 +10798,7 @@ _For HD quality you can click the button below_`;
           let { pinterest } = require("./lib/scraper");
           anu = await pinterest(text);
           result = anu[Math.floor(Math.random() * anu.length)];
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             m.chat,
             {
               image: { url: result },
@@ -10838,7 +10848,7 @@ _For HD quality you can click the button below_`;
           capt += ` Chapter: ${bab}\n`;
           capt += ` Url: ${url}\n`;
           capt += ` Description: ${description}`;
-          XeonBotInc.sendImage(m.chat, thumb, capt, m);
+          conn.sendImage(m.chat, thumb, capt, m);
         }
         break;
       case "apk":
@@ -10866,7 +10876,7 @@ _For HD quality you can click the button below_`;
                 };
                 sections.push(list);
               }
-              const sendm = XeonBotInc.sendMessage(
+              const sendm = conn.sendMessage(
                 m.chat,
                 {
                   text: `${ucapannya2} ${pushname} *Search Results From ${text} Click the button below to choose*`,
@@ -10898,7 +10908,7 @@ _For HD quality you can click the button below_`;
                 return reply("*File Over Limit* " + util.format(anu));
               for (let i of anu) {
                 linkye = `*APK DOWNLOAD*\n\n*Title:* ${i.title}\n*Updated:* ${i.up}\n*Version:* ${i.vers}\n*Size:* ${i.size}\n*Url:* \n*Desc:* ${i.desc}`;
-                XeonBotInc.sendMessage(
+                conn.sendMessage(
                   m.chat,
                   {
                     image: await getBuffer(i.thumb),
@@ -10907,7 +10917,7 @@ _For HD quality you can click the button below_`;
                   },
                   { quoted: m }
                 );
-                XeonBotInc.sendMessage(
+                conn.sendMessage(
                   m.chat,
                   {
                     document: await getBuffer(i.link),
@@ -10927,7 +10937,7 @@ _For HD quality you can click the button below_`;
         {
           if (isBan) return reply(mess.ban);
           if (isBanChat) return reply(mess.banChat);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             m.chat,
             {
               text: `@${m.sender.split("@")[0]}`,
@@ -10954,7 +10964,7 @@ _For HD quality you can click the button below_`;
         let filename = (await fetch(url, { method: "HEAD" })).headers
           .get("content-disposition")
           .match(/attachment; filename=(.*)/)[1];
-        XeonBotInc.sendMessage(
+        conn.sendMessage(
           m.chat,
           {
             document: { url: url },
@@ -11183,7 +11193,7 @@ _For HD quality you can click the button below_`;
           if (/leaves/.test(command))
             link = "https://textpro.me/natural-leaves-text-effect-931.html";
           let anu = await maker.textpro(link, q);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             m.chat,
             {
               image: { url: anu },
@@ -11230,7 +11240,7 @@ _For HD quality you can click the button below_`;
             capt += `${themeemoji} Url: ${i.url}\n`;
             capt += `${themeemoji} Thumbnail Url: ${i.thumbnail}\n\n──────────────────────\n`;
           }
-          XeonBotInc.sendImage(m.chat, res.result[0].thumbnail, capt, m);
+          conn.sendImage(m.chat, res.result[0].thumbnail, capt, m);
         }
         break;
       case "animexxx":
@@ -11258,7 +11268,7 @@ _For HD quality you can click the button below_`;
                   },
                 },
               ];
-              await XeonBotInc.send5ButLoc(
+              await conn.send5ButLoc(
                 from,
                 txt,
                 `© ${ownername}`,
@@ -11297,7 +11307,7 @@ _For HD quality you can click the button below_`;
                 },
               },
             ];
-            await XeonBotInc.send5ButLoc(
+            await conn.send5ButLoc(
               from,
               txt,
               `© ${ownername}`,
@@ -11334,7 +11344,7 @@ _For HD quality you can click the button below_`;
                 },
               },
             ];
-            await XeonBotInc.send5ButLoc(
+            await conn.send5ButLoc(
               from,
               txt,
               `© ${ownername}`,
@@ -11394,7 +11404,7 @@ _For HD quality you can click the button below_`;
           /\[Written by MAL Rewrite]/g,
           ""
         )}`;
-        XeonBotInc.sendMessage(
+        conn.sendMessage(
           m.chat,
           {
             image: { url: result.images.jpg.large_image_url },
@@ -11437,7 +11447,7 @@ _For HD quality you can click the button below_`;
           /\[Written by MAL Rewrite]/g,
           ""
         )}`;
-        XeonBotInc.sendMessage(
+        conn.sendMessage(
           m.chat,
           {
             image: { url: srh.data[0].images.jpg.large_image_url },
@@ -11475,7 +11485,7 @@ ${themeemoji} Url : ${result.link}
           tres.result;
         console.log(Map);
         const captt = `Time : ${Waktu}\nLatitude : ${Lintang}\nLongitude : ${Bujur}\nRegion : ${Wilayah}`;
-        XeonBotInc.sendMessage(from, { image: { url: Map }, caption: captt });
+        conn.sendMessage(from, { image: { url: Map }, caption: captt });
         break;
       case "covidindo":
       case "covid":
@@ -11483,7 +11493,7 @@ ${themeemoji} Url : ${result.link}
         if (isBanChat) return reply(mess.banChat);
         const c = await covid();
         var { kasus, kematian, sembuh } = c[0];
-        XeonBotInc.sendMessage(
+        conn.sendMessage(
           from,
           {
             text: `Case : ${kasus}\n\nDead : ${kematian}\n\nHealed : ${sembuh}`,
@@ -11527,7 +11537,7 @@ ${themeemoji} Url : ${result.link}
           for (let i of data) {
             krl += `\n────────────────────\n\n *📍Title :* ${i.judul}\n *📟 Quality :* ${i.quality}\n *🖥️ Type : ${i.type}*\n *⌛ Uploaded :* ${i.upload}\n *🌍 Source :* ${i.link}`;
           }
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { image: { url: data[0].thumb }, caption: krl },
             { quoted: fdocs }
@@ -11543,7 +11553,7 @@ ${themeemoji} Url : ${result.link}
           let { pinterest } = require("./lib/scraperW");
           anu = await pinterest(text);
           result = anu[Math.floor(Math.random() * anu.length)];
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             m.chat,
             {
               image: { url: result },
@@ -11612,7 +11622,7 @@ ${themeemoji} Url : ${result.link}
               buttons: buttons,
               headerType: 4,
             };
-            XeonBotInc.sendMessage(m.chat, buttonMessage, { quoted: m });
+            conn.sendMessage(m.chat, buttonMessage, { quoted: m });
           });
         }
         break;
@@ -11643,7 +11653,7 @@ ${themeemoji} Url : ${result.link}
               buttons: buttons,
               headerType: 4,
             };
-            XeonBotInc.sendMessage(m.chat, buttonMessage, { quoted: m });
+            conn.sendMessage(m.chat, buttonMessage, { quoted: m });
           });
         }
         break;
@@ -11676,7 +11686,7 @@ ${themeemoji} Url : ${result.link}
               buttons: buttons,
               headerType: 4,
             };
-            XeonBotInc.sendMessage(m.chat, buttonMessage, { quoted: m });
+            conn.sendMessage(m.chat, buttonMessage, { quoted: m });
           });
         }
         break;
@@ -11708,7 +11718,7 @@ ${themeemoji} Url : ${result.link}
               buttons: buttons,
               headerType: 4,
             };
-            XeonBotInc.sendMessage(m.chat, buttonMessage, { quoted: m });
+            conn.sendMessage(m.chat, buttonMessage, { quoted: m });
           });
         }
         break;
@@ -11747,7 +11757,7 @@ ${themeemoji} Url : ${result.link}
         if (isBanChat) return reply(mess.banChat);
         var res = await Darkjokes();
         teks = "\nDarkjokes*";
-        XeonBotInc.sendMessage(
+        conn.sendMessage(
           m.chat,
           { image: { url: res }, caption: teks },
           { quoted: m }
@@ -11800,7 +11810,7 @@ ${themeemoji} Url : ${result.link}
             teks += `Link: ${i.berita_url}\n`;
           }
           teks += "══════════════════";
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             m.chat,
             { image: { url: res[0].berita_thumb }, caption: teks },
             { quoted: m }
@@ -11822,7 +11832,7 @@ ${themeemoji} Url : ${result.link}
             teks += `Link: ${i.berita_url}\n`;
           }
           teks += "══════════════════";
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             m.chat,
             { image: { url: res[0].berita_thumb }, caption: teks },
             { quoted: m }
@@ -11844,7 +11854,7 @@ ${themeemoji} Url : ${result.link}
             teks += `Link: ${i.berita_url}\n`;
           }
           teks += "══════════════════";
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             m.chat,
             { image: { url: res[0].berita_thumb }, caption: teks },
             { quoted: m }
@@ -11866,7 +11876,7 @@ ${themeemoji} Url : ${result.link}
             teks += `Link: ${i.berita_url}\n`;
           }
           teks += "══════════════════";
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             m.chat,
             { image: { url: res[0].berita_thumb }, caption: teks },
             { quoted: m }
@@ -11887,7 +11897,7 @@ ${themeemoji} Url : ${result.link}
             teks += `Link: ${i.berita_url}\n`;
           }
           teks += "══════════════════";
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             m.chat,
             { image: { url: res[0].berita_thumb }, caption: teks },
             { quoted: m }
@@ -11907,7 +11917,7 @@ ${themeemoji} Url : ${result.link}
             teks += `Link: ${i.berita_url}\n`;
           }
           teks += "══════════════════";
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             m.chat,
             { image: { url: res[0].berita_thumb }, caption: teks },
             { quoted: m }
@@ -11947,7 +11957,7 @@ ${themeemoji} Url : ${result.link}
             teks += `Link: ${i.berita_url}\n`;
           }
           teks += "══════════════════";
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             m.chat,
             { image: { url: res[0].berita_thumb }, caption: teks },
             { quoted: m }
@@ -11986,7 +11996,7 @@ ${themeemoji} Url : ${result.link}
             teks += `Link: ${i.berita_url}\n`;
           }
           teks += "══════════════════";
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             m.chat,
             { image: { url: res[0].berita_thumb }, caption: teks },
             { quoted: m }
@@ -12008,7 +12018,7 @@ ${themeemoji} Url : ${result.link}
             teks += `Link: ${i.berita_url}\n`;
           }
           teks += "══════════════════";
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             m.chat,
             { image: { url: res[0].berita_thumb }, caption: teks },
             { quoted: m }
@@ -12031,7 +12041,7 @@ ${themeemoji} Url : ${result.link}
             teks += `Link: ${i.berita_url}\n`;
           }
           teks += "══════════════════";
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             m.chat,
             { image: { url: res[0].berita_thumb }, caption: teks },
             { quoted: m }
@@ -12052,7 +12062,7 @@ ${themeemoji} Url : ${result.link}
             teks += `Link: ${i.berita_url}\n`;
           }
           teks += "══════════════════";
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             m.chat,
             { image: { url: res[0].berita_thumb }, caption: teks },
             { quoted: m }
@@ -12068,7 +12078,7 @@ ${themeemoji} Url : ${result.link}
         teks += "\nLaughing out loud?🥴\n";
         teks += `\nSource: ${res}\n`;
         teks += "══════════════════";
-        XeonBotInc.sendMessage(
+        conn.sendMessage(
           m.chat,
           { image: { url: res }, caption: teks },
           { quoted: m }
@@ -12088,7 +12098,7 @@ ${themeemoji} Url : ${result.link}
             capt += ` Thumbnail: ${i.thumb}\n`;
             capt += ` Url: ${i.url}\n\n──────────────────────\n`;
           }
-          XeonBotInc.sendImage(m.chat, res.result[0].thumb, capt, m);
+          conn.sendImage(m.chat, res.result[0].thumb, capt, m);
         }
         break;
       case "shortstoryx":
@@ -12165,12 +12175,12 @@ ${themeemoji} Url : ${result.link}
             "https://raw.githubusercontent.com/iamriz7/kopel_/main/kopel.json"
           );
           let random = anu[Math.floor(Math.random() * anu.length)];
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             m.chat,
             { image: { url: random.male }, caption: `Couple Male🙎🏻‍♂️` },
             { quoted: m }
           );
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             m.chat,
             { image: { url: random.female }, caption: `Couple Female🙎🏻‍♀️` },
             { quoted: m }
@@ -12198,7 +12208,7 @@ ${themeemoji} Url : ${result.link}
             buttons: buttons,
             headerType: 2,
           };
-          XeonBotInc.sendMessage(m.chat, buttonMessage, { quoted: m });
+          conn.sendMessage(m.chat, buttonMessage, { quoted: m });
         }
         break;
       case "wallpaper":
@@ -12230,7 +12240,7 @@ ${themeemoji} Url : ${result.link}
             buttons: buttons,
             headerType: 4,
           };
-          XeonBotInc.sendMessage(m.chat, buttonMessage, { quoted: m });
+          conn.sendMessage(m.chat, buttonMessage, { quoted: m });
         }
         break;
 
@@ -12243,7 +12253,7 @@ ${themeemoji} Url : ${result.link}
           return reply("_[ ! ] Error Result Not Found_");
         });
         const result2 = `*Title :* ${res2[0].judul}\n*Wiki :* ${res2[0].wiki}`;
-        XeonBotInc.sendMessage(from, {
+        conn.sendMessage(from, {
           image: { url: res2[0].thumb },
           caption: result2,
         });
@@ -12266,11 +12276,11 @@ ${themeemoji} Url : ${result.link}
           let buttonMessage = {
             image: { url: result.image },
             caption: `${themeemoji} Title : ${result.title}\n${themeemoji} Source : ${result.source}\n${themeemoji} Media Url : ${result.image}`,
-            footer: XeonBotInc.user.name,
+            footer: conn.user.name,
             buttons: buttons,
             headerType: 4,
           };
-          XeonBotInc.sendMessage(m.chat, buttonMessage, { quoted: m });
+          conn.sendMessage(m.chat, buttonMessage, { quoted: m });
         }
         break;
       case "quotesanime":
@@ -12296,7 +12306,7 @@ ${themeemoji} Url : ${result.link}
             buttons: buttons,
             headerType: 2,
           };
-          XeonBotInc.sendMessage(m.chat, buttonMessage, { quoted: m });
+          conn.sendMessage(m.chat, buttonMessage, { quoted: m });
         }
         break;
       case "nomerhoki":
@@ -12308,7 +12318,7 @@ ${themeemoji} Url : ${result.link}
             return reply(`Example : ${prefix + command} 916909137213`);
           let anu = await primbon.nomer_hoki(Number(text));
           if (anu.status == false) return reply(anu.message);
-          XeonBotInc.sendText(
+          conn.sendText(
             m.chat,
             `${themeemoji} *Phone Number :* ${anu.message.nomer_hp}\n${themeemoji} *Shuzi Angka Figures :* ${anu.message.angka_shuzi}\n${themeemoji} *Positive Energy :*\n- Riches : ${anu.message.energi_positif.kekayaan}\n- Health : ${anu.message.energi_positif.kesehatan}\n- Love : ${anu.message.energi_positif.cinta}\n- Stability : ${anu.message.energi_positif.kestabilan}\n- Percentage : ${anu.message.energi_positif.persentase}\n${themeemoji} *Negative Energy :*\n- Dispute : ${anu.message.energi_negatif.perselisihan}\n- Lost : ${anu.message.energi_negatif.kehilangan}\n- Catastrophe : ${anu.message.energi_negatif.malapetaka}\n- Destruction : ${anu.message.energi_negatif.kehancuran}\n- Percentage : ${anu.message.energi_negatif.persentase}`,
             m
@@ -12323,7 +12333,7 @@ ${themeemoji} Url : ${result.link}
           if (!text) return reply(`Example : ${prefix + command} belanja`);
           let anu = await primbon.tafsir_mimpi(text);
           if (anu.status == false) return reply(anu.message);
-          XeonBotInc.sendText(
+          conn.sendText(
             m.chat,
             `${themeemoji} *Dream :* ${anu.message.mimpi}\n${themeemoji} *Meaning :* ${anu.message.arti}\n${themeemoji} *Solution :* ${anu.message.solusi}`,
             m
@@ -12362,7 +12372,7 @@ ${themeemoji} Url : ${result.link}
             thn2
           );
           if (anu.status == false) return reply(anu.message);
-          XeonBotInc.sendText(
+          conn.sendText(
             m.chat,
             `${themeemoji} *Your Name :* ${anu.message.nama_anda.nama}\n${themeemoji} *Your Birth :* ${anu.message.nama_anda.tgl_lahir}\n${themeemoji} *Couple Name :* ${anu.message.nama_pasangan.nama}\n${themeemoji} *Born Couple :* ${anu.message.nama_pasangan.tgl_lahir}\n${themeemoji} *Results :* ${anu.message.result}\n${themeemoji} *Notes :* ${anu.message.catatan}`,
             m
@@ -12401,7 +12411,7 @@ ${themeemoji} Url : ${result.link}
             thn2
           );
           if (anu.status == false) return reply(anu.message);
-          XeonBotInc.sendText(
+          conn.sendText(
             m.chat,
             `${themeemoji} *Your Name :* ${anu.message.nama_anda.nama}\n${themeemoji} *Your Birth :* ${anu.message.nama_anda.tgl_lahir}\n${themeemoji} *Couple Name :* ${anu.message.nama_pasangan.nama}\n${themeemoji} *Born Couple :* ${anu.message.nama_pasangan.tgl_lahir}\n${themeemoji} *Results :* ${anu.message.result}\n${themeemoji} *Notes :* ${anu.message.catatan}`,
             m
@@ -12439,7 +12449,7 @@ ${themeemoji} Url : ${result.link}
             thn2
           );
           if (anu.status == false) return reply(anu.message);
-          XeonBotInc.sendText(
+          conn.sendText(
             m.chat,
             `${themeemoji} *Husband's Name :* ${anu.message.suami.nama}\n${themeemoji} *Husband Born :* ${anu.message.suami.tgl_lahir}\n${themeemoji} *Wife's Name :* ${anu.message.istri.nama}\n${themeemoji} *Born Wife :* ${anu.message.istri.tgl_lahir}\n${themeemoji} *Results :* ${anu.message.result}\n${themeemoji} *Notes :* ${anu.message.catatan}`,
             m
@@ -12478,7 +12488,7 @@ ${themeemoji} Url : ${result.link}
             thn2
           );
           if (anu.status == false) return reply(anu.message);
-          XeonBotInc.sendText(
+          conn.sendText(
             m.chat,
             `${themeemoji} *Your Name :* ${anu.message.nama_anda.nama}\n${themeemoji} *Your Birth :* ${anu.message.nama_anda.tgl_lahir}\n${themeemoji} *Couple Name :* ${anu.message.nama_pasangan.nama}\n${themeemoji} *Born Couple :* ${anu.message.nama_pasangan.tgl_lahir}\n${themeemoji} *Positive Side :* ${anu.message.sisi_positif}\n${themeemoji} *Negative Side :* ${anu.message.sisi_negatif}\n${themeemoji} *Notes :* ${anu.message.catatan}`,
             m
@@ -12493,7 +12503,7 @@ ${themeemoji} Url : ${result.link}
             return reply(`Example : ${prefix + command} Dika Ardianta`);
           let anu = await primbon.arti_nama(text);
           if (anu.status == false) return reply(anu.message);
-          XeonBotInc.sendText(
+          conn.sendText(
             m.chat,
             `${themeemoji} *Name :* ${anu.message.nama}\n${themeemoji} *Meaning :* ${anu.message.arti}\n${themeemoji} *Notes :* ${anu.message.catatan}`,
             m
@@ -12510,7 +12520,7 @@ ${themeemoji} Url : ${result.link}
           let [nama, tgl, bln, thn] = text.split`,`;
           let anu = await primbon.kecocokan_nama(nama, tgl, bln, thn);
           if (anu.status == false) return reply(anu.message);
-          XeonBotInc.sendText(
+          conn.sendText(
             m.chat,
             `${themeemoji} *Name :* ${anu.message.nama}\n${themeemoji} *Born :* ${anu.message.tgl_lahir}\n${themeemoji} *Life Path :* ${anu.message.life_path}\n${themeemoji} *Destiny :* ${anu.message.destiny}\n${themeemoji} *Destiny Desire :* ${anu.message.destiny_desire}\n${themeemoji} *Personality :* ${anu.message.personality}\n${themeemoji} *Percentage :* ${anu.message.persentase_kecocokan}`,
             m
@@ -12527,7 +12537,7 @@ ${themeemoji} Url : ${result.link}
           let [nama1, nama2] = text.split`|`;
           let anu = await primbon.kecocokan_nama_pasangan(nama1, nama2);
           if (anu.status == false) return reply(anu.message);
-          XeonBotInc.sendImage(
+          conn.sendImage(
             m.chat,
             anu.message.gambar,
             `${themeemoji} *Your Name :* ${anu.message.nama_anda}\n${themeemoji} *Couple Name :* ${anu.message.nama_pasangan}\n${themeemoji} *Positive Side :* ${anu.message.sisi_positif}\n${themeemoji} *Negative Side :* ${anu.message.sisi_negatif}`,
@@ -12544,7 +12554,7 @@ ${themeemoji} Url : ${result.link}
           let [tgl, bln, thn] = text.split`,`;
           let anu = await primbon.tanggal_jadian_pernikahan(tgl, bln, thn);
           if (anu.status == false) return reply(anu.message);
-          XeonBotInc.sendText(
+          conn.sendText(
             m.chat,
             `${themeemoji} *Wedding Date :* ${anu.message.tanggal}\n${themeemoji} *Characteristics :* ${anu.message.karakteristik}`,
             m
@@ -12559,7 +12569,7 @@ ${themeemoji} Url : ${result.link}
           let [tgl, bln, thn] = text.split`,`;
           let anu = await primbon.sifat_usaha_bisnis(tgl, bln, thn);
           if (anu.status == false) return reply(anu.message);
-          XeonBotInc.sendText(
+          conn.sendText(
             m.chat,
             `${themeemoji} *Born :* ${anu.message.hari_lahir}\n${themeemoji} *Business :* ${anu.message.usaha}`,
             m
@@ -12575,7 +12585,7 @@ ${themeemoji} Url : ${result.link}
           let [tgl, bln, thn] = text.split`,`;
           let anu = await primbon.rejeki_hoki_weton(tgl, bln, thn);
           if (anu.status == false) return reply(anu.message);
-          XeonBotInc.sendText(
+          conn.sendText(
             m.chat,
             `${themeemoji} *Born :* ${anu.message.hari_lahir}\n${themeemoji} *Sustenance :* ${anu.message.rejeki}\n${themeemoji} *Notes :* ${anu.message.catatan}`,
             m
@@ -12591,7 +12601,7 @@ ${themeemoji} Url : ${result.link}
           let [tgl, bln, thn] = text.split`,`;
           let anu = await primbon.pekerjaan_weton_lahir(tgl, bln, thn);
           if (anu.status == false) return reply(anu.message);
-          XeonBotInc.sendText(
+          conn.sendText(
             m.chat,
             `${themeemoji} *Born :* ${anu.message.hari_lahir}\n?? *Profession :* ${anu.message.pekerjaan}\n${themeemoji} *Notes :* ${anu.message.catatan}`,
             m
@@ -12608,7 +12618,7 @@ ${themeemoji} Url : ${result.link}
           let [tgl, bln, thn] = text.split`,`;
           let anu = await primbon.ramalan_nasib(tgl, bln, thn);
           if (anu.status == false) return reply(anu.message);
-          XeonBotInc.sendText(
+          conn.sendText(
             m.chat,
             `${themeemoji} *Analysis :* ${anu.message.analisa}\n${themeemoji} *Root Number :* ${anu.message.angka_akar}\n${themeemoji} *Nature :* ${anu.message.sifat}\n${themeemoji} *Element :* ${anu.message.elemen}\n${themeemoji} *Lucky Numbers :* ${anu.message.angka_keberuntungan}`,
             m
@@ -12624,7 +12634,7 @@ ${themeemoji} Url : ${result.link}
           let [tgl, bln, thn] = text.split`,`;
           let anu = await primbon.cek_potensi_penyakit(tgl, bln, thn);
           if (anu.status == false) return reply(anu.message);
-          XeonBotInc.sendText(
+          conn.sendText(
             m.chat,
             `${themeemoji} *Analysis :* ${anu.message.analisa}\n${themeemoji} *Sector :* ${anu.message.sektor}\n?? *Element :* ${anu.message.elemen}\n${themeemoji} *Notes :* ${anu.message.catatan}`,
             m
@@ -12640,7 +12650,7 @@ ${themeemoji} Url : ${result.link}
           let [tgl, bln, thn] = text.split`,`;
           let anu = await primbon.arti_kartu_tarot(tgl, bln, thn);
           if (anu.status == false) return reply(anu.message);
-          XeonBotInc.sendImage(
+          conn.sendImage(
             m.chat,
             anu.message.image,
             `${themeemoji} *Born :* ${anu.message.tgl_lahir}\n${themeemoji} *Tarot Symbol :* ${anu.message.simbol_tarot}\n${themeemoji} *Meaning :* ${anu.message.arti}\n${themeemoji} *Notes :* ${anu.message.catatan}`,
@@ -12661,7 +12671,7 @@ ${themeemoji} Url : ${result.link}
           let [nama, gender, tahun] = text.split`,`;
           let anu = await primbon.perhitungan_feng_shui(nama, gender, tahun);
           if (anu.status == false) return reply(anu.message);
-          XeonBotInc.sendText(
+          conn.sendText(
             m.chat,
             `${themeemoji} *Name :* ${anu.message.nama}\n${themeemoji} *Born :* ${anu.message.tahun_lahir}\n${themeemoji} *Gender :* ${anu.message.jenis_kelamin}\n${themeemoji} *Kua Number :* ${anu.message.angka_kua}\n${themeemoji} *Group :* ${anu.message.kelompok}\n${themeemoji} *Character :* ${anu.message.karakter}\n${themeemoji} *Good Sector :* ${anu.message.sektor_baik}\n${themeemoji} *Bad Sector :* ${anu.message.sektor_buruk}`,
             m
@@ -12676,7 +12686,7 @@ ${themeemoji} Url : ${result.link}
           let [tgl, bln, thn] = text.split`,`;
           let anu = await primbon.petung_hari_baik(tgl, bln, thn);
           if (anu.status == false) return reply(anu.message);
-          XeonBotInc.sendText(
+          conn.sendText(
             m.chat,
             `${themeemoji} *Born :* ${anu.message.tgl_lahir}\n${themeemoji} *When Challenged :* ${anu.message.kala_tinantang}\n${themeemoji} *Info :* ${anu.message.info}\n${themeemoji} *Notes :* ${anu.message.catatan}`,
             m
@@ -12692,7 +12702,7 @@ ${themeemoji} Url : ${result.link}
           let [tgl, bln, thn] = text.split`,`;
           let anu = await primbon.hari_sangar_taliwangke(tgl, bln, thn);
           if (anu.status == false) return reply(anu.message);
-          XeonBotInc.sendText(
+          conn.sendText(
             m.chat,
             `${themeemoji} *Born :* ${anu.message.tgl_lahir}\n${themeemoji} *Results :* ${anu.message.result}\n${themeemoji} *Info :* ${anu.message.info}\n${themeemoji} *Notes :* ${anu.message.catatan}`,
             m
@@ -12706,7 +12716,7 @@ ${themeemoji} Url : ${result.link}
           let [tgl, bln, thn] = text.split`,`;
           let anu = await primbon.primbon_hari_naas(tgl, bln, thn);
           if (anu.status == false) return reply(anu.message);
-          XeonBotInc.sendText(
+          conn.sendText(
             m.chat,
             `${themeemoji} *Day Of Birth :* ${anu.message.hari_lahir}\n${themeemoji} *Date Of Birth :* ${anu.message.tgl_lahir}\n${themeemoji} *Fateful Day :* ${anu.message.hari_naas}\n${themeemoji} *Info :* ${anu.message.catatan}\n${themeemoji} *Notes :* ${anu.message.info}`,
             m
@@ -12722,7 +12732,7 @@ ${themeemoji} Url : ${result.link}
           let [tgl, bln, thn] = text.split`,`;
           let anu = await primbon.rahasia_naga_hari(tgl, bln, thn);
           if (anu.status == false) return reply(anu.message);
-          XeonBotInc.sendText(
+          conn.sendText(
             m.chat,
             `${themeemoji} *Day Of Birth :* ${anu.message.hari_lahir}\n${themeemoji} *Date Of Birth :* ${anu.message.tgl_lahir}\n${themeemoji} *Dragon Day Direction :* ${anu.message.arah_naga_hari}\n${themeemoji} *Notes :* ${anu.message.catatan}`,
             m
@@ -12738,7 +12748,7 @@ ${themeemoji} Url : ${result.link}
           let [tgl, bln, thn] = text.split`,`;
           let anu = await primbon.primbon_arah_rejeki(tgl, bln, thn);
           if (anu.status == false) return reply(anu.message);
-          XeonBotInc.sendText(
+          conn.sendText(
             m.chat,
             `${themeemoji} *Day Of Birth :* ${anu.message.hari_lahir}\n${themeemoji} *Date Of Birth :* ${anu.message.tgl_lahir}\n${themeemoji} *Sustenance Direction :* ${anu.message.arah_rejeki}\n${themeemoji} *Notes :* ${anu.message.catatan}`,
             m
@@ -12764,7 +12774,7 @@ ${themeemoji} Url : ${result.link}
             untuk
           );
           if (anu.status == false) return reply(anu.message);
-          XeonBotInc.sendText(
+          conn.sendText(
             m.chat,
             `${themeemoji} *Name :* ${anu.message.nama}\n${themeemoji} *Born :* ${anu.message.tgl_lahir}\n${themeemoji} *Fortune Of The Year :* ${anu.message.peruntungan_tahun}\n${themeemoji} *Results :* ${anu.message.result}\n${themeemoji} *Notes :* ${anu.message.catatan}`,
             m
@@ -12780,7 +12790,7 @@ ${themeemoji} Url : ${result.link}
           let [tgl, bln, thn] = text.split`,`;
           let anu = await primbon.weton_jawa(tgl, bln, thn);
           if (anu.status == false) return reply(anu.message);
-          XeonBotInc.sendText(
+          conn.sendText(
             m.chat,
             `${themeemoji} *Date :* ${anu.message.tanggal}\n${themeemoji} *Number Of Neptune :* ${anu.message.jumlah_neptu}\n${themeemoji} *Day Character :* ${anu.message.watak_hari}\n${themeemoji} *Dragon Day :* ${anu.message.naga_hari}\n${themeemoji} *Good Hour :* ${anu.message.jam_baik}\n${themeemoji} *Birth Character :* ${anu.message.watak_kelahiran}`,
             m
@@ -12802,7 +12812,7 @@ ${themeemoji} Url : ${result.link}
             thn
           );
           if (anu.status == false) return reply(anu.message);
-          XeonBotInc.sendText(
+          conn.sendText(
             m.chat,
             `${themeemoji} *Name :* ${anu.message.nama}\n${themeemoji} *Born :* ${anu.message.tgl_lahir}\n${themeemoji} *Lifeline :* ${anu.message.garis_hidup}`,
             m
@@ -12818,7 +12828,7 @@ ${themeemoji} Url : ${result.link}
           let [nama, tgl, bln, thn] = text.split`,`;
           let anu = await primbon.potensi_keberuntungan(nama, tgl, bln, thn);
           if (anu.status == false) return reply(anu.message);
-          XeonBotInc.sendText(
+          conn.sendText(
             m.chat,
             `${themeemoji} *Name :* ${anu.message.nama}\n${themeemoji} *Born :* ${anu.message.tgl_lahir}\n${themeemoji} *Results :* ${anu.message.result}`,
             m
@@ -12833,7 +12843,7 @@ ${themeemoji} Url : ${result.link}
           let [tgl, bln, thn] = text.split`,`;
           let anu = await primbon.primbon_memancing_ikan(tgl, bln, thn);
           if (anu.status == false) return reply(anu.message);
-          XeonBotInc.sendText(
+          conn.sendText(
             m.chat,
             `${themeemoji} *Date :* ${anu.message.tgl_memancing}\n${themeemoji} *Results :* ${anu.message.result}\n${themeemoji} *Notes :* ${anu.message.catatan}`,
             m
@@ -12851,7 +12861,7 @@ ${themeemoji} Url : ${result.link}
           let [tgl, bln, thn, siklus] = text.split`,`;
           let anu = await primbon.masa_subur(tgl, bln, thn, siklus);
           if (anu.status == false) return reply(anu.message);
-          XeonBotInc.sendText(
+          conn.sendText(
             m.chat,
             `${themeemoji} *Results :* ${anu.message.result}\n${themeemoji} *Notes :* ${anu.message.catatan}`,
             m
@@ -12898,7 +12908,7 @@ ${themeemoji} Url : ${result.link}
 
           let anu = await primbon.zodiak(zodiac);
           if (anu.status == false) return reply(anu.message);
-          XeonBotInc.sendText(
+          conn.sendText(
             m.chat,
             `${themeemoji} *Zodiac :* ${anu.message.zodiak}\n${themeemoji} *Number :* ${anu.message.nomor_keberuntungan}\n${themeemoji} *Aroma :* ${anu.message.aroma_keberuntungan}\n${themeemoji} *Planet :* ${anu.message.planet_yang_mengitari}\n${themeemoji} *Flower :* ${anu.message.bunga_keberuntungan}\n${themeemoji} *Color :* ${anu.message.warna_keberuntungan}\n${themeemoji} *Stone :* ${anu.message.batu_keberuntungan}\n${themeemoji} *Element :* ${anu.message.elemen_keberuntungan}\n${themeemoji} *Zodiac Couple :* ${anu.message.pasangan_zodiak}\n${themeemoji} *Notes :* ${anu.message.catatan}`,
             m
@@ -12917,7 +12927,7 @@ ${themeemoji} Url : ${result.link}
             );
           let anu = await primbon.shio(text);
           if (anu.status == false) return reply(anu.message);
-          XeonBotInc.sendText(
+          conn.sendText(
             m.chat,
             `${themeemoji} *Results :* ${anu.message}`,
             m
@@ -12967,7 +12977,7 @@ _Please choose the button below_`;
               },
             },
           };
-          XeonBotInc.sendMessage(from, buttonMessage, { quoted: m });
+          conn.sendMessage(from, buttonMessage, { quoted: m });
         }
         break;
       case "tiktoknowm":
@@ -12983,7 +12993,7 @@ _Please choose the button below_`;
           });
           console.log(musim_rambutan);
           const xeonytiktoknowm = musim_rambutan.result.nowatermark;
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { video: { url: xeonytiktoknowm }, caption: "Here you go!" },
             { quoted: m }
@@ -13003,7 +13013,7 @@ _Please choose the button below_`;
           });
           console.log(musim_rambutan);
           const xeonytiktokaudio = musim_rambutan.result.nowatermark;
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             { audio: { url: xeonytiktokaudio }, mimetype: "audio/mp4" },
             { quoted: m }
@@ -13062,7 +13072,7 @@ ${global.themeemoji} Url : ${anu.url}`,
               },
             },
           };
-          XeonBotInc.sendMessage(m.chat, buttonMessage, { quoted: m });
+          conn.sendMessage(m.chat, buttonMessage, { quoted: m });
         }
         break;
       case "getmusic":
@@ -13116,7 +13126,7 @@ _Select video or audio and wait a while_`;
                     },
                   },
                 };
-                XeonBotInc.sendMessage(from, buttonMessage, { quoted: m });
+                conn.sendMessage(from, buttonMessage, { quoted: m });
               })
               .catch((_) => _);
           } catch {
@@ -13128,7 +13138,7 @@ _Select video or audio and wait a while_`;
         {
           if (isBan) return reply(mess.ban);
           if (isBanChat) return reply(mess.banChat);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             {
               video: { url: args[0] },
@@ -13153,7 +13163,7 @@ _Select video or audio and wait a while_`;
         {
           if (isBan) return reply(mess.ban);
           if (isBanChat) return reply(mess.banChat);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             from,
             {
               audio: { url: args[0] },
@@ -13188,7 +13198,7 @@ _Select video or audio and wait a while_`;
             return reply("*File Over Limit* " + util.format(anu));
           tummb = await getBuffer(anu.thumb);
           audio = await getBuffer(anu.audio);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             m.chat,
             {
               document: audio,
@@ -13197,7 +13207,7 @@ _Select video or audio and wait a while_`;
             },
             { quoted: m }
           ).catch((err) => reply(mess.error));
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             m.chat,
             {
               video: { url: anu.video },
@@ -13227,7 +13237,7 @@ _Select video or audio and wait a while_`;
 
 *${themeemoji}TITLE:* ${data.title}\n*${themeemoji}QUALITY:* ${data.medias[0].quality}\n*${themeemoji}SIZE:* ${data.medias[0].formattedSize}\n*${themeemoji}DURATION* ${data.duration}\n*${themeemoji}ID:* ${data.medias[0].cached}\n*${themeemoji}LINK:* ${data.url}\n\n*${botname}*`;
               buf = await getBuffer(data.thumbnail);
-              XeonBotInc.sendMessage(
+              conn.sendMessage(
                 m.chat,
                 {
                   image: { url: data.thumbnail },
@@ -13236,7 +13246,7 @@ _Select video or audio and wait a while_`;
                 },
                 { quoted: m }
               );
-              XeonBotInc.sendMessage(
+              conn.sendMessage(
                 m.chat,
                 {
                   video: { url: data.medias[0].url },
@@ -13290,7 +13300,7 @@ _Select video or audio and wait a while_`;
                     },
                   },
                 };
-                XeonBotInc.sendMessage(m.chat, buttonMessage, { quoted: m });
+                conn.sendMessage(m.chat, buttonMessage, { quoted: m });
               })
               .catch((_) => _);
           } catch {
@@ -13315,7 +13325,7 @@ _Select video or audio and wait a while_`;
 *Mime* : ${baby1[0].mime}
 *Link* : ${baby1[0].link}`;
           reply(`${result4}`);
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             m.chat,
             {
               document: { url: baby1[0].link },
@@ -13362,14 +13372,14 @@ ${themeemoji} Caption : ${anu.caption}
 ${themeemoji} Url : ${anu.media[0]}
 To Download Media, Please Click One Of The Buttons Below Or Enter The ytmp3/ytmp4 Command With The Url Above
 `,
-              footer: XeonBotInc.user.name,
+              footer: conn.user.name,
               buttons,
               headerType: 4,
             };
-            XeonBotInc.sendMessage(m.chat, buttonMessage, { quoted: m });
+            conn.sendMessage(m.chat, buttonMessage, { quoted: m });
           } else if (anu.type == "image") {
             anu.media.map(async (url) => {
-              XeonBotInc.sendMessage(
+              conn.sendMessage(
                 m.chat,
                 {
                   image: { url },
@@ -13394,7 +13404,7 @@ To Download Media, Please Click One Of The Buttons Below Or Enter The ytmp3/ytmp
           let { ringtone } = require("./lib/scraper");
           let anu = await ringtone(text);
           let result = anu[Math.floor(Math.random() * anu.length)];
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             m.chat,
             {
               audio: { url: result.audio },
@@ -13410,7 +13420,7 @@ To Download Media, Please Click One Of The Buttons Below Or Enter The ytmp3/ytmp
           if (isBan) return reply(mess.ban);
           if (!args.join(" ")) return reply(`Example: ${prefix + command} 10`);
           var req = args.join(" ");
-          media = await XeonBotInc.downloadAndSaveMediaMessage(quoted, "tempo");
+          media = await conn.downloadAndSaveMediaMessage(quoted, "tempo");
           if (isQuotedAudio) {
             ran = getRandom(".mp3");
             exec(
@@ -13419,7 +13429,7 @@ To Download Media, Please Click One Of The Buttons Below Or Enter The ytmp3/ytmp
                 fs.unlinkSync(media);
                 if (err) return reply("Error!");
                 hah = fs.readFileSync(ran);
-                XeonBotInc.sendMessage(
+                conn.sendMessage(
                   from,
                   { audio: hah, mimetype: "audio/mp4", ptt: true },
                   { quoted: m }
@@ -13435,7 +13445,7 @@ To Download Media, Please Click One Of The Buttons Below Or Enter The ytmp3/ytmp
                 fs.unlinkSync(media);
                 if (err) return reply("Error!");
                 hah = fs.readFileSync(ran);
-                XeonBotInc.sendMessage(
+                conn.sendMessage(
                   from,
                   { video: hah, mimetype: "video/mp4" },
                   { quoted: m }
@@ -13453,7 +13463,7 @@ To Download Media, Please Click One Of The Buttons Below Or Enter The ytmp3/ytmp
           if (isBan) return reply(mess.ban);
           if (isBanChat) return reply(mess.banChat);
           if (!args.join(" ")) return reply(`Example: ${prefix + command} 10`);
-          media = await XeonBotInc.downloadAndSaveMediaMessage(
+          media = await conn.downloadAndSaveMediaMessage(
             quoted,
             "volume"
           );
@@ -13465,7 +13475,7 @@ To Download Media, Please Click One Of The Buttons Below Or Enter The ytmp3/ytmp
                 fs.unlinkSync(media);
                 if (err) return reply("Error!");
                 jadie = fs.readFileSync(rname);
-                XeonBotInc.sendMessage(
+                conn.sendMessage(
                   from,
                   { audio: jadie, mimetype: "audio/mp4", ptt: true },
                   { quoted: m }
@@ -13481,7 +13491,7 @@ To Download Media, Please Click One Of The Buttons Below Or Enter The ytmp3/ytmp
                 fs.unlinkSync(media);
                 if (err) return reply("Error!");
                 jadie = fs.readFileSync(rname);
-                XeonBotInc.sendMessage(
+                conn.sendMessage(
                   from,
                   { video: jadie, mimetype: "video/mp4" },
                   { quoted: m }
@@ -13534,13 +13544,13 @@ To Download Media, Please Click One Of The Buttons Below Or Enter The ytmp3/ytmp
             set = '-filter:a "atempo=0.5,asetrate=65100"';
           if (/audio/.test(mime)) {
             reply(mess.wait);
-            let media = await XeonBotInc.downloadAndSaveMediaMessage(quoted);
+            let media = await conn.downloadAndSaveMediaMessage(quoted);
             let ran = getRandom(".mp3");
             exec(`ffmpeg -i ${media} ${set} ${ran}`, (err, stderr, stdout) => {
               fs.unlinkSync(media);
               if (err) return reply(err);
               let buff = fs.readFileSync(ran);
-              XeonBotInc.sendMessage(
+              conn.sendMessage(
                 m.chat,
                 { audio: buff, mimetype: "audio/mpeg" },
                 { quoted: m }
@@ -13617,7 +13627,7 @@ ${Object.entries(global.db.data.sticker)
   )
   .join("\n")}
 `.trim();
-          XeonBotInc.sendText(m.chat, teks, m, {
+          conn.sendText(m.chat, teks, m, {
             mentions: Object.values(global.db.data.sticker)
               .map((x) => x.mentionedJid)
               .reduce((a, b) => [...a, ...b], []),
@@ -13669,7 +13679,7 @@ View List Of Messages With ${prefix}listmsg`);
           let msgs = global.db.data.database;
           if (!(text.toLowerCase() in msgs))
             return reply(`'${text}' Not Listed In The Message List`);
-          XeonBotInc.copyNForward(m.chat, msgs[text.toLowerCase()], true);
+          conn.copyNForward(m.chat, msgs[text.toLowerCase()], true);
         }
         break;
       case "listmsg":
@@ -13719,13 +13729,13 @@ View List Of Messages With ${prefix}listmsg`);
               type: 1,
             },
           ];
-          XeonBotInc.sendButtonText(
+          conn.sendButtonText(
             m.chat,
             buttons,
-            `\`\`\`Hi ${await XeonBotInc.getName(
+            `\`\`\`Hi ${await conn.getName(
               m.sender
             )} Welcome To Anonymous Chat\n\nClick The Button Below To Find A Partner\`\`\``,
-            XeonBotInc.user.name,
+            conn.user.name,
             m
           );
         }
@@ -13747,7 +13757,7 @@ View List Of Messages With ${prefix}listmsg`);
               type: 1,
             },
           ];
-          await XeonBotInc.sendButtonText(
+          await conn.sendButtonText(
             m.chat,
             buttons,
             `\`\`\`You Are Not In An Anonymous Session, Press The Button To Find A Partner \`\`\``
@@ -13757,7 +13767,7 @@ View List Of Messages With ${prefix}listmsg`);
         reply("Ok");
         let other = room.other(m.sender);
         if (other)
-          await XeonBotInc.sendText(
+          await conn.sendText(
             other,
             `\`\`\`Partner Has Left Anonymous Session\`\`\``,
             m
@@ -13781,11 +13791,11 @@ View List Of Messages With ${prefix}listmsg`);
               type: 1,
             },
           ];
-          await XeonBotInc.sendButtonText(
+          await conn.sendButtonText(
             m.chat,
             buttons,
             `\`\`\`You Are Still In An Anonymous Session, Press The Button Below To Terminate Your Anonymous Session\`\`\``,
-            XeonBotInc.user.name,
+            conn.user.name,
             m
           );
           reply(false);
@@ -13806,20 +13816,20 @@ View List Of Messages With ${prefix}listmsg`);
               type: 1,
             },
           ];
-          await XeonBotInc.sendButtonText(
+          await conn.sendButtonText(
             room.a,
             buttons,
             `\`\`\`Successfully Found Partner, Now You Can Send Message\`\`\``,
-            XeonBotInc.user.name,
+            conn.user.name,
             m
           );
           room.b = m.sender;
           room.state = "CHATTING";
-          await XeonBotInc.sendButtonText(
+          await conn.sendButtonText(
             room.b,
             buttons,
             `\`\`\`Successfully Found Partner, Now You Can Send Message\`\`\``,
-            XeonBotInc.user.name,
+            conn.user.name,
             m
           );
         } else {
@@ -13843,11 +13853,11 @@ View List Of Messages With ${prefix}listmsg`);
               type: 1,
             },
           ];
-          await XeonBotInc.sendButtonText(
+          await conn.sendButtonText(
             m.chat,
             buttons,
             `\`\`\`Please Wait, Looking For A Partner\`\`\``,
-            XeonBotInc.user.name,
+            conn.user.name,
             m
           );
         }
@@ -13870,7 +13880,7 @@ View List Of Messages With ${prefix}listmsg`);
               type: 1,
             },
           ];
-          await XeonBotInc.sendButtonText(
+          await conn.sendButtonText(
             m.chat,
             buttons,
             `\`\`\`You Are Not In An Anonymous Session, Press The Button To Find A Partner\`\`\``
@@ -13879,7 +13889,7 @@ View List Of Messages With ${prefix}listmsg`);
         }
         let other = romeo.other(m.sender);
         if (other)
-          await XeonBotInc.sendText(
+          await conn.sendText(
             other,
             `\`\`\`Partner Has Left Anonymous Session\`\`\``,
             m
@@ -13901,20 +13911,20 @@ View List Of Messages With ${prefix}listmsg`);
               type: 1,
             },
           ];
-          await XeonBotInc.sendButtonText(
+          await conn.sendButtonText(
             room.a,
             buttons,
             `\`\`\`Successfully Found Partner, Now You Can Send Message\`\`\``,
-            XeonBotInc.user.name,
+            conn.user.name,
             m
           );
           room.b = m.sender;
           room.state = "CHATTING";
-          await XeonBotInc.sendButtonText(
+          await conn.sendButtonText(
             room.b,
             buttons,
             `\`\`\`Successfully Found Partner, Now You Can Send Message\`\`\``,
-            XeonBotInc.user.name,
+            conn.user.name,
             m
           );
         } else {
@@ -13938,11 +13948,11 @@ View List Of Messages With ${prefix}listmsg`);
               type: 1,
             },
           ];
-          await XeonBotInc.sendButtonText(
+          await conn.sendButtonText(
             m.chat,
             buttons,
             `\`\`\`Please Wait, Looking For A Partner\`\`\``,
-            XeonBotInc.user.name,
+            conn.user.name,
             m
           );
         }
@@ -13953,7 +13963,7 @@ View List Of Messages With ${prefix}listmsg`);
           if (isBan) return reply(mess.ban);
           if (isBanChat) return reply(mess.banChat);
           if (!isCreator) return replay(`${mess.owner}`);
-          XeonBotInc.public = true;
+          conn.public = true;
           reply("Successful Change To Public Usage");
         }
         break;
@@ -13962,7 +13972,7 @@ View List Of Messages With ${prefix}listmsg`);
           if (isBan) return reply(mess.ban);
           if (isBanChat) return reply(mess.banChat);
           if (!isCreator) return replay(`${mess.owner}`);
-          XeonBotInc.public = false;
+          conn.public = false;
           reply("Successful Change To Self Usage");
         }
         break;
@@ -13971,7 +13981,7 @@ View List Of Messages With ${prefix}listmsg`);
         if (isBan) return reply(mess.ban);
         if (isBanChat) return reply(mess.banChat);
         if (!q) return reply("Send orders *#setbio text*");
-        XeonBotInc.setStatus(`${q}`);
+        conn.setStatus(`${q}`);
         reply(mess.success);
         break;
       case "antitag":
@@ -14112,7 +14122,7 @@ ${cpus
       case "owner":
       case "creator":
         {
-          XeonBotInc.sendContact(m.chat, global.vcardowner, m);
+          conn.sendContact(m.chat, global.vcardowner, m);
         }
         break;
       case "setmenu":
@@ -14185,11 +14195,11 @@ ${cpus
                 ],
               },
             ];
-            XeonBotInc.sendListMsg(
+            conn.sendListMsg(
               m.chat,
               `Please select the menu you want to change!`,
               ` `,
-              XeonBotInc.user.name,
+              conn.user.name,
               `Click Here`,
               sections,
               m
@@ -14213,13 +14223,13 @@ ${cpus
           }\nRequest : ${args.join(" ")}`;
           teks2 = `\n\nSuccessfully sent to owner`;
           for (let i of owner) {
-            XeonBotInc.sendMessage(
+            conn.sendMessage(
               i + "@s.whatsapp.net",
               { text: teks + teks1, mentions: [m.sender] },
               { quoted: m }
             );
           }
-          XeonBotInc.sendMessage(
+          conn.sendMessage(
             m.chat,
             { text: teks + teks2 + teks1, mentions: [m.sender] },
             { quoted: m }
@@ -14233,7 +14243,7 @@ ${cpus
           if (isBanChat) return reply(mess.banChat);
           if (!text)
             return reply(`Enter The Bug\n\nExample: ${command} Menu Error`);
-          XeonBotInc.sendMessage(`${owner}@s.whatsapp.net`, {
+          conn.sendMessage(`${owner}@s.whatsapp.net`, {
             text: `*Bug Report From:* wa.me/${m.sender.split("@")[0]}
 Report Message: ${text}`,
           });
@@ -14279,7 +14289,7 @@ Report Message: ${text}`,
               },
             },
           };
-          XeonBotInc.sendMessage(m.chat, buttonMessage, { quoted: m });
+          conn.sendMessage(m.chat, buttonMessage, { quoted: m });
         }
         break;
       case "alive":
@@ -14291,7 +14301,7 @@ Report Message: ${text}`,
         {
           if (isBan) return reply(mess.ban);
           if (isBanChat) return reply(mess.banChat);
-          XeonBotInc.sendMessage(from, {
+          conn.sendMessage(from, {
             react: { text: `${global.reactmoji}`, key: m.key },
           });
           let btn = [
@@ -14328,7 +14338,7 @@ Report Message: ${text}`,
           ];
           let setbot = db.data.settings[botNumber];
           if (setbot.templateImage) {
-            XeonBotInc.send5ButImg(
+            conn.send5ButImg(
               m.chat,
               menulist,
               global.botname,
@@ -14337,7 +14347,7 @@ Report Message: ${text}`,
               global.thumb
             );
           } else if (setbot.templateGif) {
-            XeonBotInc.send5ButGif(
+            conn.send5ButGif(
               m.chat,
               menulist,
               global.botname,
@@ -14346,7 +14356,7 @@ Report Message: ${text}`,
               global.thumb
             );
           } else if (setbot.templateVid) {
-            XeonBotInc.send5ButVid(
+            conn.send5ButVid(
               m.chat,
               anu,
               global.botname,
@@ -14355,7 +14365,7 @@ Report Message: ${text}`,
               global.thumb
             );
           } else if (setbot.templateVideo) {
-            XeonBotInc.send5ButVid(
+            conn.send5ButVid(
               m.chat,
               menulist,
               global.botname,
@@ -14382,7 +14392,7 @@ Report Message: ${text}`,
               },
               { quickReplyButton: { displayText: `Owner 😎`, id: "owner" } },
             ];
-            XeonBotInc.sendMessage(m.chat, {
+            conn.sendMessage(m.chat, {
               caption: menulist,
               document: fs.readFileSync("./Media/theme/cheems.xlsx"),
               mimetype: `${docs}`,
@@ -14556,7 +14566,7 @@ Report Message: ${text}`,
             }),
             {}
           );
-          XeonBotInc.relayMessage(m.chat, template.message, {
+          conn.relayMessage(m.chat, template.message, {
             messageId: template.key.id,
           });
         }
@@ -14565,7 +14575,7 @@ Report Message: ${text}`,
         if (isBan) return reply(mess.ban);
         if (isBanChat) return reply(mess.banChat);
         var unicorn = await getBuffer(picak + "All Menu");
-        await XeonBotInc.send5ButImg(
+        await conn.send5ButImg(
           from,
           `╔═══════✪「 💚OWNER💚 」	
 ╠ ${prefix}self
@@ -15220,7 +15230,7 @@ Report Message: ${text}`,
         if (isBan) return reply(mess.ban);
         if (isBanChat) return reply(mess.banChat);
         var unicorn = await getBuffer(picak + "Owner Menu");
-        await XeonBotInc.send5ButImg(
+        await conn.send5ButImg(
           from,
           `╔═══════✪「 💚OWNER💚 」	
 ╠ ${prefix}self
@@ -15260,7 +15270,7 @@ Report Message: ${text}`,
         if (isBan) return reply(mess.ban);
         if (isBanChat) return reply(mess.banChat);
         var unicorn = await getBuffer(picak + "Group Menu");
-        await XeonBotInc.send5ButImg(
+        await conn.send5ButImg(
           from,
           `╔═══════✪「 💚GROUP💚 」	
 ╠${prefix}groupsetting
@@ -15321,7 +15331,7 @@ Report Message: ${text}`,
         if (isBan) return reply(mess.ban);
         if (isBanChat) return reply(mess.banChat);
         var unicorn = await getBuffer(picak + "Maker Menu");
-        await XeonBotInc.send5ButImg(
+        await conn.send5ButImg(
           from,
           `╔═══════✪「 💚MAKER💚 」	
 ╠${prefix}candy
@@ -15450,7 +15460,7 @@ Report Message: ${text}`,
         if (isBan) return reply(mess.ban);
         if (isBanChat) return reply(mess.banChat);
         var unicorn = await getBuffer(picak + "Download Menu");
-        await XeonBotInc.send5ButImg(
+        await conn.send5ButImg(
           from,
           `╔═══════✪「 💚DOWNLOAD💚 」	
 ╠${prefix}instagram [url]
@@ -15492,7 +15502,7 @@ Report Message: ${text}`,
         if (isBan) return reply(mess.ban);
         if (isBanChat) return reply(mess.banChat);
         var unicorn = await getBuffer(picak + "Search Menu");
-        await XeonBotInc.send5ButImg(
+        await conn.send5ButImg(
           from,
           `╔═══════✪「 💚SEARCH💚 」	
 ╠${prefix}play [query]
@@ -15539,7 +15549,7 @@ Report Message: ${text}`,
         if (isBan) return reply(mess.ban);
         if (isBanChat) return reply(mess.banChat);
         var unicorn = await getBuffer(picak + "Convert Menu");
-        await XeonBotInc.send5ButImg(
+        await conn.send5ButImg(
           from,
           `╔═══════✪「 💚CONVERT💚 」	
 ╠ ${prefix}toimage [reply stick]
@@ -15589,7 +15599,7 @@ Report Message: ${text}`,
         if (isBan) return reply(mess.ban);
         if (isBanChat) return reply(mess.banChat);
         var unicorn = await getBuffer(picak + "Random Image Menu");
-        await XeonBotInc.send5ButImg(
+        await conn.send5ButImg(
           from,
           `╔═══════✪「 💚RANDOM IMG💚 」	
 ╠${prefix}coffee
@@ -15624,7 +15634,7 @@ Report Message: ${text}`,
         if (isBan) return reply(mess.ban);
         if (isBanChat) return reply(mess.banChat);
         var unicorn = await getBuffer(picak + "Emote Menu");
-        await XeonBotInc.send5ButImg(
+        await conn.send5ButImg(
           from,
           `╔═══════✪「 💚EMOTE💚 」	
 ╠${prefix}instagramemoji
@@ -15658,7 +15668,7 @@ Report Message: ${text}`,
         if (isBan) return reply(mess.ban);
         if (isBanChat) return reply(mess.banChat);
         var unicorn = await getBuffer(picak + "Image Effect Menu");
-        await XeonBotInc.send5ButImg(
+        await conn.send5ButImg(
           from,
           `╔═════✪「 💚IMG EFFECT💚 」	
 ╠${prefix}wanted
@@ -15694,7 +15704,7 @@ Report Message: ${text}`,
         if (isBan) return reply(mess.ban);
         if (isBanChat) return reply(mess.banChat);
         var unicorn = await getBuffer(picak + "Anime Menu");
-        await XeonBotInc.send5ButImg(
+        await conn.send5ButImg(
           from,
           `╔═══════✪「 💚ANIME💚 」	
 ╠${prefix}naruto
@@ -15763,7 +15773,7 @@ Report Message: ${text}`,
         if (isBan) return reply(mess.ban);
         if (isBanChat) return reply(mess.banChat);
         var unicorn = await getBuffer(picak + "Sticker Menu");
-        await XeonBotInc.send5ButImg(
+        await conn.send5ButImg(
           from,
           `╔═══════✪「 💚STICKER💚 」	
 ╠ ${prefix}patrick
@@ -15792,7 +15802,7 @@ Report Message: ${text}`,
         if (isBan) return reply(mess.ban);
         if (isBanChat) return reply(mess.banChat);
         var unicorn = await getBuffer(picak + "Anime Sticker Menu");
-        await XeonBotInc.send5ButImg(
+        await conn.send5ButImg(
           from,
           `╔═══════✪「 💚ANIME STICKER💚 」	
 ╠${prefix}loli
@@ -15843,7 +15853,7 @@ Report Message: ${text}`,
         if (isBan) return reply(mess.ban);
         if (isBanChat) return reply(mess.banChat);
         var unicorn = await getBuffer(picak + "Fun Menu");
-        await XeonBotInc.send5ButImg(
+        await conn.send5ButImg(
           from,
           `╔═══════✪「 💚Fun💚 」	
 ╠ ${prefix}how [text
@@ -15929,7 +15939,7 @@ Report Message: ${text}`,
         if (isBan) return reply(mess.ban);
         if (isBanChat) return reply(mess.banChat);
         var unicorn = await getBuffer(picak + "Sound Menu");
-        await XeonBotInc.send5ButImg(
+        await conn.send5ButImg(
           from,
           `╔═══════✪「 💚Sound💚 」	
 ╠ ${prefix}sound1
@@ -16112,7 +16122,7 @@ Report Message: ${text}`,
         if (isBan) return reply(mess.ban);
         if (isBanChat) return reply(mess.banChat);
         var unicorn = await getBuffer(picak + "Game Menu");
-        await XeonBotInc.send5ButImg(
+        await conn.send5ButImg(
           from,
           `╔═══════✪「 💚GAME💚 」	
 ╠ ${prefix}truth
@@ -16141,7 +16151,7 @@ Report Message: ${text}`,
         if (isBan) return reply(mess.ban);
         if (isBanChat) return reply(mess.banChat);
         var unicorn = await getBuffer(picak + "Anonymous Menu");
-        await XeonBotInc.send5ButImg(
+        await conn.send5ButImg(
           from,
           `╔═══✪「 💚ANONYMOUS💚 」	
 ╠${prefix}anonymous
@@ -16167,7 +16177,7 @@ Report Message: ${text}`,
         if (isBan) return reply(mess.ban);
         if (isBanChat) return reply(mess.banChat);
         var unicorn = await getBuffer(picak + "Tool Menu");
-        await XeonBotInc.send5ButImg(
+        await conn.send5ButImg(
           from,
           `╔═══════✪「 💚TOOL💚 」	
 ╠ ${prefix}translate [text]
@@ -16192,7 +16202,7 @@ Report Message: ${text}`,
         if (isBan) return reply(mess.ban);
         if (isBanChat) return reply(mess.banChat);
         var unicorn = await getBuffer(picak + "Database Menu");
-        await XeonBotInc.send5ButImg(
+        await conn.send5ButImg(
           from,
           `╔═══✪「 💚DATABASE💚 」	
 ╠ ${prefix}setcmd
@@ -16222,7 +16232,7 @@ Report Message: ${text}`,
         if (isBan) return reply(mess.ban);
         if (isBanChat) return reply(mess.banChat);
         var unicorn = await getBuffer(picak + "Other Menu");
-        await XeonBotInc.send5ButImg(
+        await conn.send5ButImg(
           from,
           `╔═══════✪「 💚OTHER💚 」	
 ╠ ${prefix}afk
@@ -16351,8 +16361,8 @@ Report Message: ${text}`,
           if (!m.isGroup) return;
           if (m.key.fromMe) return;
           sendNye = fs.readFileSync("./Media/theme/yourtag.webp");
-          XeonBotInc.sendReadReceipt(m.chat, m.sender, [m.key.id]);
-          XeonBotInc.sendMessage(
+          conn.sendReadReceipt(m.chat, m.sender, [m.key.id]);
+          conn.sendMessage(
             from,
             {
               sticker: sendNye,
@@ -16367,8 +16377,8 @@ Report Message: ${text}`,
           if (!m.isGroup) return;
           if (m.key.fromMe) return;
           sendNye = fs.readFileSync("./Media/theme/yourtag.webp");
-          XeonBotInc.sendReadReceipt(m.chat, m.sender, [m.key.id]);
-          XeonBotInc.sendMessage(
+          conn.sendReadReceipt(m.chat, m.sender, [m.key.id]);
+          conn.sendMessage(
             from,
             {
               sticker: sendNye,
@@ -16382,7 +16392,7 @@ Report Message: ${text}`,
           if (m.isBaileys) return;
           let msgs = global.db.data.database;
           if (!(budy.toLowerCase() in msgs)) return;
-          XeonBotInc.copyNForward(m.chat, msgs[budy.toLowerCase()], true);
+          conn.copyNForward(m.chat, msgs[budy.toLowerCase()], true);
         }
     }
   } catch (err) {
