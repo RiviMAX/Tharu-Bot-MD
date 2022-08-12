@@ -6,6 +6,7 @@
 <p align="center">
 Tharu Bot Multi Device whatsapp bot created by <a href="https://github.com/RiviMAX" target="_blank">Rivishan</a> using <a href="https://github.com/adiwajshing/Baileys" target="_blank">Baileys</a> and <a href="https://github.com/nodejs" target="_blank">Nodejs</a>.
 </p>
+
 ## [`Scan QR Code For Session`](https://wa.me/94789864930)
 
 [![Cheems Bot](https://repl.it/badge/github/quiec/whatsasena)](https://replit.com/@RIVISHANSANDEE1/Tharu-Bot-Multi-Device-Qr-Code-Genarator?output%20only=1&lite=1#index.js)
