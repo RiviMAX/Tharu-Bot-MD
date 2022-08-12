@@ -18,7 +18,7 @@ global.autoReadGc = false; //auto reading in gc (true to on, false to off)
 global.autoRecord = false; //auto recording (true to on, false to off)
 global.available = true; //auto available (true to on, false to off)
 global.autoreply = true; //auto available (true to on, false to off)
-global.aut_rep_isStartWith = true;
+global.aut_rep_isStartWith = true; //auto reply (true to on, false to off)
 
 //semt menu variants
 global.vidmenu = fs.readFileSync("./Media/theme/Tharu Bot Gif.gif"); //gif and video menu
