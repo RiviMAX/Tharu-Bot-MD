@@ -661,15 +661,15 @@ module.exports = XeonBotInc = async (conn, m, chatUpdate, store) => {
         timezone: "Asia/Kolkata",
       }
     );
-
+/***
     // Auto reply
     if (global.autoreply){
-      conn.sendMessage(from, { react: { text: `💗`, key: m.key }})
+      // conn.sendMessage(from, { react: { text: `💗`, key: m.key }})
       const FirstWord = body.toLowerCase().split(" ")[0];
       let condition = _auto_reply[FirstWord];
       if (condition == !undefined) reply(condition)
     }
-
+***/
     //hitter
     global.hit = {};
     if (isCmd) {
