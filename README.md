@@ -56,7 +56,8 @@ Tharu Bot Multi Device whatsapp bot created by <a href="https://github.com/RiviM
             <br>
         </td>
         <td>
-            <p>Bug Fixing</p>
+            <p>Bug Fixing & Add Some Featues</p>
+            <br>
         </td>
         <td>
             <p>Group Management</P>
