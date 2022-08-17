@@ -31,8 +31,8 @@ Tharu Bot Multi Device whatsapp bot created by <a href="https://github.com/RiviM
         <td><a border="2" href="https://github.com/RiviMAX"><img src="https://i.ibb.co/CWf55nv/Rivi.jpg " width="250" alt="Rivishan Sandeep"></a></td>
     </tr>
     <tr>
-        <td>Owner</td>
         <br>
+        <td>Owner</td>
         <td>
             Developer & Owner
             <br>
