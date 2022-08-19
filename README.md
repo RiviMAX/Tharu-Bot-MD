@@ -57,7 +57,10 @@ Tharu Bot Multi Device whatsapp bot created by <a href="https://github.com/RiviM
         </td>
         <td>
             <p>Bug Fixing & Add Some Featues</p>
-            <br>
+             <p align="center">
+                <a href="https://wa.me/94761539856">
+                <img src="https://img.shields.io/badge/Contact Dark Ezio-00ffff?style=for-the-badge&logo=whatsapp&logoWidth=30&logoColor=blueviolet" />
+            </p>
         </td>
         <td>
             <p>Group Management</P>
