@@ -14292,28 +14292,10 @@ Report Message: ${text}`,
           conn.sendMessage(m.chat, buttonMessage, { quoted: m });
         }
         break;
-		case 'vsvvv':{
- 
-                      let buttons = [
-                    {buttonId: `menu`, buttonText: {displayText: 'MENU'}, type: 1},
-                   {buttonId: `menu`, buttonText: {displayText: 'MENU'}, type: 1},
-                   {buttonId: `menu`, buttonText: {displayText: 'MENU'}, type: 1}
-                   
-                    
-                ]
-                let buttonMessage = {
-                    image: { url:  },
-                    caption: `  `,
-                    footer: `  `,
-                    buttons: buttons,
-                    headerType: 4
-                }
-                conn.sendMessage(m.chat, buttonMessage, { quoted: m })
-            }
-            break;    
       case "alive":
       case "panel":
       case "list":
+      case "menu":
       case "help":
       case "?":
         {
