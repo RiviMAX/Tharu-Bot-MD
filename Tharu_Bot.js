@@ -14295,7 +14295,7 @@ Report Message: ${text}`,
       case "alive":
       case "panel":
       case "list":
-      case 'menu':
+      case "menu":
       case "help":
       case "?":
         {
