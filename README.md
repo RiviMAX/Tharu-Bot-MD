@@ -1,4 +1,4 @@
-<a><img src='https://i.ibb.co/z4jV7nd/Rainbow-Line-Imgur.gif' width=700 /></a>
+<a><img src='https://i.ibb.co/z4jV7nd/Rainbow-Line-Imgur.gif' width=900 /></a>
 <h1 align="center">☺️ Tharu Bot 💞</h1>
 <p align="center">
 <img src="https://i.ibb.co/3pJvPsW/Tharu-Bot-Gif.gif " alt="Tharu-Bot-Gif" border="5" />
