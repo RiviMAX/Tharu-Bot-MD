@@ -39,7 +39,7 @@ Tharu Bot Multi Device whatsapp bot created by <a href="https://github.com/RiviM
         <td>
             Developer & Owner
             <br>
-            <a href="https://wa.me/94789864930"><img src="https://img.shields.io/badge/Contact Rivishan-25D366?style=for-the-badge&logo=whatsapp&logoColor=white" /></td>
+            </td>
     </tr>
 </table>
 
