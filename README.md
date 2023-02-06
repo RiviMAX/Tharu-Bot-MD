@@ -46,26 +46,14 @@ Tharu Bot Multi Device whatsapp bot created by <a href="https://github.com/RiviM
 <table>
     <tr>
         <th>Tharushi</th>
-        <th>Dark Ezio</th>
-        <th>Heshan</th>
     </tr>
     <tr>
         <td><a border="2" href="https://github.com/RiviMAX"><img src="https://i.ibb.co/Zf22J1r/Besty-54.jpg" width="250" alt="Tharushi"></a></td>
-        <td><a border="2" href="https://github.com/AiDarkEzio"><img src="https://i.ibb.co/tZdmPkP/Dark-Ezio.jpg" width="250" alt="Dark Ezio"></a></td>
-        <td><a border="2" href="https://github.com/RiviMAX"><img src="https://i.ibb.co/b7zxGny/Heshan.jpg" width="250" alt="RiviMAX"></a></td>
     </tr>
     <tr>
         <td>
             <p>Voice & Idea</P>
              <br>
-        </td>
-        <td>
-            <p>Bug Fixing & Add Some Featues</p>
-            <br>
-        </td>
-        <td>
-            <p>Group Management</P>
-            <br>
         </td>
     </tr>
 </table>
