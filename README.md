@@ -45,18 +45,3 @@ Tharu Bot Multi Device whatsapp bot created by <a href="https://github.com/RiviM
         <td>Voice & Idea</td>
     </tr>
 </table>
-
-<table>
-    <tr>
-        
-    </tr>
-    <tr>
-        
-    </tr>
-    <tr>
-        <td>
-            <p></P>
-             <br>
-        </td>
-    </tr>
-</table>
