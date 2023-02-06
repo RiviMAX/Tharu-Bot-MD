@@ -29,6 +29,7 @@ Tharu Bot Multi Device whatsapp bot created by <a href="https://github.com/RiviM
     <tr>
         <th>Ms:Tharu</th>
         <th>Rivishan</th>
+        <th>Tharushi</th>
     </tr>
     <tr>
         <td><a border="2" href="https://github.com/RiviMAX"><img src="https://i.ibb.co/S6K3b9Y/Tharu-Bot-2.jpg" width="200" alt="Tharu Bot"></a></td>
@@ -41,19 +42,20 @@ Tharu Bot Multi Device whatsapp bot created by <a href="https://github.com/RiviM
             Developer & Owner
             <br>
             </td>
+        <td>Voice & Idea</td>
     </tr>
 </table>
 
 <table>
     <tr>
-        <th>Tharushi</th>
+        
     </tr>
     <tr>
         
     </tr>
     <tr>
         <td>
-            <p>Voice & Idea</P>
+            <p></P>
              <br>
         </td>
     </tr>
